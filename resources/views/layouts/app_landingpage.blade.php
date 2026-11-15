@@ -151,8 +151,8 @@
                             style="background-color: #0b1d26; border-color: rgba(255,255,255,0.1);">
 
                             <li>
-                                <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="{{ url('/dashboard') }}">
-                                    <i class="bi bi-speedometer2 text-accent"></i> Dashboard
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="{{ route('home') }}">
+                                    <i class="bi bi-speedometer2 text-accent"></i> Panel de Control Gastronómico
                                 </a>
                             </li>
                             <li>
