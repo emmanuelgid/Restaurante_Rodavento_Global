@@ -4,31 +4,76 @@
 
 @section('content')
 <div class="container-fluid px-lg-4">
-    <!-- Header Title -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-        <div>
-            <h1 class="h3 fw-bold text-dark mb-1">Panel de Control & Operaciones</h1>
-            <p class="text-muted mb-0 small">Bienvenido, <strong>{{ Auth::user()->name }}</strong>. Monitoreo en tiempo real de sucursales, sala, comandas y fidelización VIP.</p>
-        </div>
-        <div class="d-flex gap-2 mt-3 mt-md-0">
-            <a href="{{ route('reservaciones.create') }}" class="btn btn-rv-gold btn-sm d-flex align-items-center gap-1 shadow-sm">
-                <i class="bi bi-calendar-plus"></i> Nueva Reservación
-            </a>
-            <a href="{{ route('comandas.create') }}" class="btn btn-rv-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
-                <i class="bi bi-receipt-cutoff"></i> Abrir Comanda
-            </a>
+    <!-- Header Title & Filter Bar -->
+    <div class="card card-custom p-3 mb-4 shadow-sm border-0">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+            <div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <h1 class="h3 fw-bold text-dark mb-0">Panel de Control & Operaciones</h1>
+                    @if($sucursalActual)
+                        <span class="badge bg-warning text-dark px-2 py-1 fs-6">
+                            <i class="bi bi-geo-alt-fill me-1 text-danger"></i> {{ $sucursalActual->nombre }}
+                        </span>
+                        <a href="{{ route('home') }}" class="btn btn-outline-secondary btn-sm py-0 px-2 small" title="Quitar filtro y ver consolidado">
+                            <i class="bi bi-x-circle me-1"></i>Ver todas
+                        </a>
+                    @else
+                        <span class="badge bg-primary px-2 py-1 fs-6">
+                            <i class="bi bi-buildings-fill me-1"></i> Cadena Completa (Todas las Sucursales)
+                        </span>
+                    @endif
+                </div>
+                <p class="text-muted mb-0 small mt-1">
+                    Bienvenido, <strong>{{ Auth::user()->name }}</strong>. Monitoreo en tiempo real de ocupación de sala, comandas activas y facturación.
+                </p>
+            </div>
+
+            <!-- Filtro Desplegable de Sucursales / Lugares + Acciones Rápidas -->
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <!-- Dropdown Selector de Sucursal -->
+                <form method="GET" action="{{ route('home') }}" id="form_filtro_lugar" class="d-flex align-items-center">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-dark fw-bold border-secondary-subtle">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i> Lugar / Sucursal:
+                        </span>
+                        <select name="sucursal_id" class="form-select form-select-sm fw-semibold border-secondary-subtle shadow-none" style="min-width: 220px;" onchange="document.getElementById('form_filtro_lugar').submit()">
+                            <option value="" {{ empty($sucursalId) ? 'selected' : '' }}>
+                                🏢 Todas las Sucursales (Consolidado)
+                            </option>
+                            @foreach($sucursales as $suc)
+                                <option value="{{ $suc->id }}" {{ $sucursalId == $suc->id ? 'selected' : '' }}>
+                                    📍 {{ $suc->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </form>
+
+                <a href="{{ route('reservaciones.create') }}" class="btn btn-rv-gold btn-sm d-flex align-items-center gap-1 shadow-sm px-3">
+                    <i class="bi bi-calendar-plus"></i> Nueva Reservación
+                </a>
+                <a href="{{ route('comandas.create') }}" class="btn btn-rv-primary btn-sm d-flex align-items-center gap-1 shadow-sm px-3">
+                    <i class="bi bi-receipt-cutoff"></i> Abrir Comanda
+                </a>
+            </div>
         </div>
     </div>
 
     <!-- Metric Cards Row -->
     <div class="row g-3 mb-4">
+        <!-- Reservaciones Hoy -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-custom h-100 p-3 border-start border-4 border-warning">
+            <div class="card card-custom h-100 p-3 border-start border-4 border-warning shadow-sm">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <div class="text-muted small text-uppercase fw-semibold">Reservaciones Hoy</div>
                         <div class="fs-3 fw-bold text-dark my-1">{{ $reservacionesHoy }}</div>
-                        <div class="small text-muted">Total registradas: <strong>{{ $totalReservaciones }}</strong></div>
+                        <div class="small text-muted">
+                            Total histórico: <strong>{{ $totalReservaciones }}</strong>
+                            @if($sucursalActual)
+                                <span class="d-block text-warning small fw-semibold">📍 {{ Str::limit($sucursalActual->nombre, 22) }}</span>
+                            @endif
+                        </div>
                     </div>
                     <div class="rounded-3 bg-warning-subtle text-warning p-3 fs-3">
                         <i class="bi bi-calendar-event"></i>
@@ -37,13 +82,19 @@
             </div>
         </div>
 
+        <!-- Comandas Activas -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-custom h-100 p-3 border-start border-4 border-primary">
+            <div class="card card-custom h-100 p-3 border-start border-4 border-primary shadow-sm">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <div class="text-muted small text-uppercase fw-semibold">Comandas Activas</div>
                         <div class="fs-3 fw-bold text-dark my-1">{{ $comandasAbiertas }}</div>
-                        <div class="small text-primary"><i class="bi bi-fire"></i> En sala y cocina</div>
+                        <div class="small text-primary">
+                            <i class="bi bi-fire"></i> En sala y cocina
+                            @if($sucursalActual)
+                                <span class="d-block text-primary small fw-semibold">📍 {{ Str::limit($sucursalActual->nombre, 22) }}</span>
+                            @endif
+                        </div>
                     </div>
                     <div class="rounded-3 bg-primary-subtle text-primary p-3 fs-3">
                         <i class="bi bi-receipt"></i>
@@ -52,13 +103,19 @@
             </div>
         </div>
 
+        <!-- Ventas Facturadas -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-custom h-100 p-3 border-start border-4 border-success">
+            <div class="card card-custom h-100 p-3 border-start border-4 border-success shadow-sm">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <div class="text-muted small text-uppercase fw-semibold">Ventas Facturadas</div>
                         <div class="fs-3 fw-bold text-dark my-1">${{ number_format($ventasTotales, 2) }}</div>
-                        <div class="small text-success"><i class="bi bi-cash-stack"></i> Ingresos notas cerradas</div>
+                        <div class="small text-success">
+                            <i class="bi bi-cash-stack"></i> Ingresos notas
+                            @if($sucursalActual)
+                                <span class="d-block text-success small fw-semibold">📍 {{ Str::limit($sucursalActual->nombre, 22) }}</span>
+                            @endif
+                        </div>
                     </div>
                     <div class="rounded-3 bg-success-subtle text-success p-3 fs-3">
                         <i class="bi bi-currency-dollar"></i>
@@ -67,16 +124,31 @@
             </div>
         </div>
 
+        <!-- Clientes & VIP / Mesas -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-custom h-100 p-3 border-start border-4 border-dark">
+            <div class="card card-custom h-100 p-3 border-start border-4 border-dark shadow-sm">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="text-muted small text-uppercase fw-semibold">Clientes & VIP</div>
-                        <div class="fs-3 fw-bold text-dark my-1">{{ $totalClientes }}</div>
-                        <div class="small text-muted"><i class="bi bi-star-fill text-warning"></i> Programa Lealtad</div>
+                        <div class="text-muted small text-uppercase fw-semibold">
+                            {{ $sucursalActual ? 'Mesas en Sucursal' : 'Clientes & VIP' }}
+                        </div>
+                        <div class="fs-3 fw-bold text-dark my-1">
+                            {{ $sucursalActual ? $totalMesas : $totalClientes }}
+                        </div>
+                        <div class="small text-muted">
+                            @if($sucursalActual)
+                                <i class="bi bi-grid-fill text-dark me-1"></i> Mesas operativas en local
+                            @else
+                                <i class="bi bi-star-fill text-warning me-1"></i> Programa Lealtad Rodavento
+                            @endif
+                        </div>
                     </div>
                     <div class="rounded-3 bg-dark-subtle text-dark p-3 fs-3">
-                        <i class="bi bi-person-check-fill"></i>
+                        @if($sucursalActual)
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                        @else
+                            <i class="bi bi-person-check-fill"></i>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -88,9 +160,16 @@
         <!-- Columna Izquierda: Reservaciones del Día & Comandas -->
         <div class="col-lg-8">
             <!-- Card Reservaciones -->
-            <div class="card card-custom mb-4">
+            <div class="card card-custom mb-4 shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
-                    <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-calendar3 me-2 text-warning"></i> Próximas Reservaciones</h5>
+                    <div>
+                        <h5 class="mb-0 fw-bold text-dark">
+                            <i class="bi bi-calendar3 me-2 text-warning"></i> Próximas Reservaciones
+                        </h5>
+                        @if($sucursalActual)
+                            <small class="text-muted">Filtradas por: <strong>{{ $sucursalActual->nombre }}</strong></small>
+                        @endif
+                    </div>
                     <a href="{{ route('reservaciones.index') }}" class="btn btn-outline-secondary btn-sm">Ver todas</a>
                 </div>
                 <div class="card-body p-0">
@@ -102,7 +181,7 @@
                                     <th>Huésped / Cliente</th>
                                     <th>Fecha & Hora</th>
                                     <th>Pax</th>
-                                    <th>Mesa</th>
+                                    <th>Sucursal & Mesa</th>
                                     <th>Estatus</th>
                                     <th>Acción</th>
                                 </tr>
@@ -124,8 +203,15 @@
                                     <td>
                                         @if($res->mesasAsignadas->isNotEmpty())
                                             <span class="badge bg-dark">{{ $res->mesasAsignadas->first()->mesaSucursal->mesa->codigo_mesa ?? 'Mesa' }}</span>
+                                            <div class="small text-muted" style="font-size: 0.75rem;">
+                                                <i class="bi bi-geo-alt"></i> {{ $res->mesasAsignadas->first()->mesaSucursal->sucursal->nombre ?? '' }}
+                                            </div>
+                                        @elseif($res->nota && $res->nota->sucursal)
+                                            <div class="small text-muted">
+                                                <i class="bi bi-geo-alt"></i> {{ $res->nota->sucursal->nombre }}
+                                            </div>
                                         @else
-                                            <span class="text-muted small">Sin mesa</span>
+                                            <span class="text-muted small">Sin mesa asignada</span>
                                         @endif
                                     </td>
                                     <td>
@@ -133,22 +219,24 @@
                                             $pillClass = match($res->estatus) {
                                                 'confirmada' => 'bg-success-subtle text-success border border-success',
                                                 'en_mesa' => 'bg-primary-subtle text-primary border border-primary',
-                                                'concluida' => 'bg-secondary-subtle text-secondary',
+                                                'finalizada', 'concluida' => 'bg-secondary-subtle text-secondary',
                                                 'cancelada' => 'bg-danger-subtle text-danger',
                                                 default => 'bg-warning-subtle text-warning'
                                             };
                                         @endphp
-                                        <span class="status-pill {{ $pillClass }}">{{ $res->estatus }}</span>
+                                        <span class="badge {{ $pillClass }}">{{ $res->estatus }}</span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('reservaciones.show', $res->id) }}" class="btn btn-sm btn-light border">
+                                        <a href="{{ route('reservaciones.show', $res->id) }}" class="btn btn-sm btn-light border" title="Ver reservación">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">No hay reservaciones registradas.</td>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        No hay reservaciones registradas {{ $sucursalActual ? 'para ' . $sucursalActual->nombre : '' }}.
+                                    </td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -158,9 +246,16 @@
             </div>
 
             <!-- Card Comandas Recientes -->
-            <div class="card card-custom">
+            <div class="card card-custom shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
-                    <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-receipt-cutoff me-2 text-primary"></i> Monitoreo de Comandas Vivas</h5>
+                    <div>
+                        <h5 class="mb-0 fw-bold text-dark">
+                            <i class="bi bi-receipt-cutoff me-2 text-primary"></i> Monitoreo de Comandas Vivas
+                        </h5>
+                        @if($sucursalActual)
+                            <small class="text-muted">Filtradas por: <strong>{{ $sucursalActual->nombre }}</strong></small>
+                        @endif
+                    </div>
                     <a href="{{ route('comandas.index') }}" class="btn btn-outline-secondary btn-sm">Ver comandas</a>
                 </div>
                 <div class="card-body p-0">
@@ -180,7 +275,11 @@
                                 @forelse($comandasRecientes as $com)
                                 <tr>
                                     <td class="fw-bold">#ORD-{{ $com->id }}</td>
-                                    <td>{{ $com->notaReservacion->sucursal->nombre ?? 'Rodavento' }}</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-geo-alt me-1 text-danger"></i> {{ $com->notaReservacion->sucursal->nombre ?? 'Rodavento' }}
+                                        </span>
+                                    </td>
                                     <td>
                                         <span class="badge bg-info-subtle text-info border border-info">{{ $com->detalles->count() }} platillos</span>
                                     </td>
@@ -200,7 +299,9 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">No hay comandas activas en este momento.</td>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        No hay comandas activas {{ $sucursalActual ? 'en ' . $sucursalActual->nombre : 'en este momento' }}.
+                                    </td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -213,7 +314,7 @@
         <!-- Columna Derecha: Top Clientes VIP y Auditoría Reciente -->
         <div class="col-lg-4">
             <!-- Top Clientes Lealtad -->
-            <div class="card card-custom mb-4">
+            <div class="card card-custom mb-4 shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
                     <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-award-fill me-2 text-warning"></i> Socios VIP / Lealtad</h5>
                     <a href="{{ route('clientes.index') }}" class="btn btn-link btn-sm text-decoration-none">Ver todos</a>
@@ -248,7 +349,7 @@
             </div>
 
             <!-- Bitácora de Auditoría en Vivo -->
-            <div class="card card-custom">
+            <div class="card card-custom shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
                     <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-shield-check me-2 text-danger"></i> Bitácora de Auditoría</h5>
                     <a href="{{ route('bitacora.index') }}" class="btn btn-link btn-sm text-decoration-none">Ver log</a>
