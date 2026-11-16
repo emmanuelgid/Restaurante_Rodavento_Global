@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\{
     Cliente, NivelLealtad, Sucursal, Alergia, SeveridadAlergia,
     Preferencia, MovimientoPuntos, Bitacora, Consentimiento, SolicitudArco
@@ -26,9 +27,9 @@ class ClienteController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nombres', 'ILIKE', "%{$search}%")
-                  ->orWhere('apellidos', 'ILIKE', "%{$search}%")
-                  ->orWhere('correo', 'ILIKE', "%{$search}%")
-                  ->orWhere('telefono', 'LIKE', "%{$search}%");
+                    ->orWhere('apellidos', 'ILIKE', "%{$search}%")
+                    ->orWhere('correo', 'ILIKE', "%{$search}%")
+                    ->orWhere('telefono', 'LIKE', "%{$search}%");
             });
         }
 
@@ -58,11 +59,11 @@ class ClienteController extends Controller
         $request->validate([
             'nombres' => 'required|string|max:150',
             'apellidos' => 'required|string|max:150',
-            'correo' => 'required|email|max:150|unique:cadena.cliente,correo',
+            'correo' => ['required', 'email', 'max:150', Rule::unique(Cliente::class, 'correo')],
             'telefono' => 'nullable|string|max:20',
             'fecha_nacimiento' => 'nullable|date',
-            'sucursal_alta_id' => 'required|exists:cadena.sucursal,id',
-            'nivel_lealtad_id' => 'required|exists:cadena.nivel_lealtad,id',
+            'sucursal_alta_id' => ['required', Rule::exists(Sucursal::class, 'id')],
+            'nivel_lealtad_id' => ['required', Rule::exists(NivelLealtad::class, 'id')],
         ]);
 
         $cliente = Cliente::create([
@@ -122,8 +123,8 @@ class ClienteController extends Controller
     public function agregarAlergia(Request $request, Cliente $cliente)
     {
         $request->validate([
-            'alergia_id' => 'required|exists:cadena.alergia,id',
-            'severidad_id' => 'required|exists:cadena.severidad_alergia,id',
+            'alergia_id' => ['required', Rule::exists(Alergia::class, 'id')],
+            'severidad_id' => ['required', Rule::exists(SeveridadAlergia::class, 'id')],
             'notas' => 'nullable|string',
         ]);
 
