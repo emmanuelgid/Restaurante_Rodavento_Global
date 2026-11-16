@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\{Platillo, CategoriaPlatillo, Temporada, Ingrediente, Alergia, Sucursal, PlatilloSucursal, Bitacora};
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class PlatilloController extends Controller
@@ -53,54 +54,142 @@ class PlatilloController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $rules = [
             'nombre' => 'required|string|max:120',
-            'categoria_id' => 'required|exists:categoria_platillo,id',
-            'temporada_id' => 'nullable|exists:temporada,id',
+            'categoria_id' => 'required',
+            'temporada_id' => 'nullable',
             'precio' => 'required|numeric|min:0',
             'descripcion' => 'nullable|string',
             'imagen_url' => 'nullable|url|max:500',
-        ]);
+        ];
 
-        $platillo = Platillo::create([
-            'nombre' => $request->nombre,
-            'categoria_id' => $request->categoria_id,
-            'temporada_id' => $request->temporada_id,
-            'precio' => $request->precio,
-            'descripcion' => $request->descripcion,
-            'imagen_url' => $request->imagen_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
-            'estatus' => 'activo',
-            'disponible' => true,
-        ]);
-
-        if ($request->filled('ingredientes')) {
-            $platillo->ingredientes()->sync($request->ingredientes);
+        if ($request->categoria_id === 'nueva') {
+            $rules['nueva_categoria_nombre'] = 'required|string|max:100';
+            $rules['nueva_categoria_descripcion'] = 'nullable|string';
+        } else {
+            $rules['categoria_id'] = 'required|exists:categoria_platillo,id';
         }
 
-        if ($request->filled('alergias')) {
-            $platillo->alergenos()->sync($request->alergias);
+        if ($request->filled('temporada_id') && $request->temporada_id === 'nueva') {
+            $rules['nueva_temporada_nombre'] = 'required|string|max:100';
+            $rules['nueva_temporada_inicio'] = 'nullable|date';
+            $rules['nueva_temporada_fin'] = 'nullable|date';
+        } elseif ($request->filled('temporada_id')) {
+            $rules['temporada_id'] = 'exists:temporada,id';
         }
 
-        // Habilitar en todas las sucursales activas
-        $sucursales = Sucursal::where('activa', true)->get();
-        foreach ($sucursales as $suc) {
-            PlatilloSucursal::updateOrCreate([
-                'sucursal_id' => $suc->id,
-                'platillo_id' => $platillo->id,
-            ], [
-                'precio_local' => $platillo->precio,
+        $request->validate($rules);
+
+        return DB::transaction(function () use ($request) {
+            // 1. Manejo dinámico de Categoría
+            if ($request->categoria_id === 'nueva') {
+                $categoria = CategoriaPlatillo::firstOrCreate(
+                    ['nombre' => trim($request->nueva_categoria_nombre)],
+                    ['descripcion' => $request->nueva_categoria_descripcion]
+                );
+                $categoriaId = $categoria->id;
+            } else {
+                $categoriaId = $request->categoria_id;
+            }
+
+            // 2. Manejo dinámico de Temporada / Rama
+            $temporadaId = null;
+            if ($request->filled('temporada_id')) {
+                if ($request->temporada_id === 'nueva') {
+                    $inicio = $request->nueva_temporada_inicio ?: Carbon::now()->toDateString();
+                    $fin = $request->nueva_temporada_fin ?: Carbon::now()->addMonths(6)->toDateString();
+                    $temporada = Temporada::firstOrCreate(
+                        ['nombre' => trim($request->nueva_temporada_nombre)],
+                        [
+                            'fecha_inicio' => $inicio,
+                            'fecha_final' => $fin,
+                        ]
+                    );
+                    $temporadaId = $temporada->id;
+                } else {
+                    $temporadaId = $request->temporada_id;
+                }
+            }
+
+            // 3. Crear Platillo
+            $platillo = Platillo::create([
+                'nombre' => $request->nombre,
+                'categoria_id' => $categoriaId,
+                'temporada_id' => $temporadaId,
+                'precio' => $request->precio,
+                'descripcion' => $request->descripcion,
+                'imagen_url' => $request->imagen_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+                'estatus' => 'activo',
                 'disponible' => true,
             ]);
-        }
 
-        Bitacora::create([
-            'usuario_id' => Auth::id(),
-            'accion' => 'CREAR_PLAT',
-            'registro_id' => "PLATILLO_{$platillo->id}",
-            'fecha_hora' => Carbon::now(),
-        ]);
+            // 4. Manejo de múltiples ingredientes (existentes + dinámicos nuevos)
+            $ingredientesIds = [];
+            if ($request->filled('ingredientes') && is_array($request->ingredientes)) {
+                $ingredientesIds = array_map('intval', $request->ingredientes);
+            }
 
-        return redirect()->route('platillos.index')->with('success', 'Platillo agregado al menú correctamente.');
+            // Nuevos ingredientes agregados dinámicamente uno a uno
+            if ($request->filled('nuevos_ingredientes') && is_array($request->nuevos_ingredientes)) {
+                foreach ($request->nuevos_ingredientes as $nuevoNombre) {
+                    $nombreLimpio = trim($nuevoNombre);
+                    if (!empty($nombreLimpio)) {
+                        $nuevoIng = Ingrediente::firstOrCreate(
+                            ['nombre' => $nombreLimpio],
+                            ['descripcion' => 'Ingrediente registrado desde ficha técnica de platillo']
+                        );
+                        $ingredientesIds[] = $nuevoIng->id;
+                    }
+                }
+            }
+
+            // Nuevos ingredientes por texto en lote (separados por coma o salto de línea)
+            if ($request->filled('nuevos_ingredientes_texto')) {
+                $partes = preg_split('/[\r\n,]+/', $request->nuevos_ingredientes_texto);
+                foreach ($partes as $parte) {
+                    $nombreLimpio = trim($parte);
+                    if (!empty($nombreLimpio)) {
+                        $nuevoIng = Ingrediente::firstOrCreate(
+                            ['nombre' => $nombreLimpio],
+                            ['descripcion' => 'Ingrediente registrado desde ficha técnica de platillo']
+                        );
+                        $ingredientesIds[] = $nuevoIng->id;
+                    }
+                }
+            }
+
+            $ingredientesIds = array_values(array_unique(array_filter($ingredientesIds)));
+            if (!empty($ingredientesIds)) {
+                $platillo->ingredientes()->sync($ingredientesIds);
+            }
+
+            // 5. Alérgenos asociados
+            if ($request->filled('alergias')) {
+                $platillo->alergenos()->sync($request->alergias);
+            }
+
+            // 6. Habilitar en todas las sucursales activas
+            $sucursales = Sucursal::where('activa', true)->get();
+            foreach ($sucursales as $suc) {
+                PlatilloSucursal::updateOrCreate([
+                    'sucursal_id' => $suc->id,
+                    'platillo_id' => $platillo->id,
+                ], [
+                    'precio_local' => $platillo->precio,
+                    'disponible' => true,
+                ]);
+            }
+
+            // 7. Registro en Bitácora de auditoría
+            Bitacora::create([
+                'usuario_id' => Auth::id(),
+                'accion' => 'CREAR_PLAT',
+                'registro_id' => "PLATILLO_{$platillo->id}",
+                'fecha_hora' => Carbon::now(),
+            ]);
+
+            return redirect()->route('platillos.index')->with('success', "Platillo '{$platillo->nombre}' agregado al menú correctamente con sus categorías e ingredientes.");
+        });
     }
 
     public function edit(Platillo $platillo)
@@ -116,37 +205,119 @@ class PlatilloController extends Controller
 
     public function update(Request $request, Platillo $platillo)
     {
-        $request->validate([
+        $rules = [
             'nombre' => 'required|string|max:120',
-            'categoria_id' => 'required|exists:categoria_platillo,id',
-            'temporada_id' => 'nullable|exists:temporada,id',
+            'categoria_id' => 'required',
+            'temporada_id' => 'nullable',
             'precio' => 'required|numeric|min:0',
             'descripcion' => 'nullable|string',
             'imagen_url' => 'nullable|url|max:500',
             'disponible' => 'boolean',
-        ]);
+        ];
 
-        $platillo->update([
-            'nombre' => $request->nombre,
-            'categoria_id' => $request->categoria_id,
-            'temporada_id' => $request->temporada_id,
-            'precio' => $request->precio,
-            'descripcion' => $request->descripcion,
-            'imagen_url' => $request->imagen_url ?? $platillo->imagen_url,
-            'disponible' => $request->has('disponible'),
-        ]);
+        if ($request->categoria_id === 'nueva') {
+            $rules['nueva_categoria_nombre'] = 'required|string|max:100';
+            $rules['nueva_categoria_descripcion'] = 'nullable|string';
+        } else {
+            $rules['categoria_id'] = 'required|exists:categoria_platillo,id';
+        }
 
-        $platillo->ingredientes()->sync($request->ingredientes ?? []);
-        $platillo->alergenos()->sync($request->alergias ?? []);
+        if ($request->filled('temporada_id') && $request->temporada_id === 'nueva') {
+            $rules['nueva_temporada_nombre'] = 'required|string|max:100';
+            $rules['nueva_temporada_inicio'] = 'nullable|date';
+            $rules['nueva_temporada_fin'] = 'nullable|date';
+        } elseif ($request->filled('temporada_id')) {
+            $rules['temporada_id'] = 'exists:temporada,id';
+        }
 
-        Bitacora::create([
-            'usuario_id' => Auth::id(),
-            'accion' => 'EDIT_PLAT',
-            'registro_id' => "PLATILLO_{$platillo->id}",
-            'fecha_hora' => Carbon::now(),
-        ]);
+        $request->validate($rules);
 
-        return redirect()->route('platillos.index')->with('success', 'Platillo actualizado exitosamente.');
+        return DB::transaction(function () use ($request, $platillo) {
+            // 1. Resolver Categoría
+            if ($request->categoria_id === 'nueva') {
+                $categoria = CategoriaPlatillo::firstOrCreate(
+                    ['nombre' => trim($request->nueva_categoria_nombre)],
+                    ['descripcion' => $request->nueva_categoria_descripcion]
+                );
+                $categoriaId = $categoria->id;
+            } else {
+                $categoriaId = $request->categoria_id;
+            }
+
+            // 2. Resolver Temporada
+            $temporadaId = null;
+            if ($request->filled('temporada_id')) {
+                if ($request->temporada_id === 'nueva') {
+                    $inicio = $request->nueva_temporada_inicio ?: Carbon::now()->toDateString();
+                    $fin = $request->nueva_temporada_fin ?: Carbon::now()->addMonths(6)->toDateString();
+                    $temporada = Temporada::firstOrCreate(
+                        ['nombre' => trim($request->nueva_temporada_nombre)],
+                        [
+                            'fecha_inicio' => $inicio,
+                            'fecha_final' => $fin,
+                        ]
+                    );
+                    $temporadaId = $temporada->id;
+                } else {
+                    $temporadaId = $request->temporada_id;
+                }
+            }
+
+            $platillo->update([
+                'nombre' => $request->nombre,
+                'categoria_id' => $categoriaId,
+                'temporada_id' => $temporadaId,
+                'precio' => $request->precio,
+                'descripcion' => $request->descripcion,
+                'imagen_url' => $request->imagen_url ?? $platillo->imagen_url,
+                'disponible' => $request->has('disponible'),
+            ]);
+
+            // 3. Resolver Ingredientes
+            $ingredientesIds = [];
+            if ($request->filled('ingredientes') && is_array($request->ingredientes)) {
+                $ingredientesIds = array_map('intval', $request->ingredientes);
+            }
+
+            if ($request->filled('nuevos_ingredientes') && is_array($request->nuevos_ingredientes)) {
+                foreach ($request->nuevos_ingredientes as $nuevoNombre) {
+                    $nombreLimpio = trim($nuevoNombre);
+                    if (!empty($nombreLimpio)) {
+                        $nuevoIng = Ingrediente::firstOrCreate(
+                            ['nombre' => $nombreLimpio],
+                            ['descripcion' => 'Ingrediente registrado desde ficha técnica de platillo']
+                        );
+                        $ingredientesIds[] = $nuevoIng->id;
+                    }
+                }
+            }
+
+            if ($request->filled('nuevos_ingredientes_texto')) {
+                $partes = preg_split('/[\r\n,]+/', $request->nuevos_ingredientes_texto);
+                foreach ($partes as $parte) {
+                    $nombreLimpio = trim($parte);
+                    if (!empty($nombreLimpio)) {
+                        $nuevoIng = Ingrediente::firstOrCreate(
+                            ['nombre' => $nombreLimpio],
+                            ['descripcion' => 'Ingrediente registrado desde ficha técnica de platillo']
+                        );
+                        $ingredientesIds[] = $nuevoIng->id;
+                    }
+                }
+            }
+
+            $platillo->ingredientes()->sync(array_values(array_unique(array_filter($ingredientesIds))));
+            $platillo->alergenos()->sync($request->alergias ?? []);
+
+            Bitacora::create([
+                'usuario_id' => Auth::id(),
+                'accion' => 'EDIT_PLAT',
+                'registro_id' => "PLATILLO_{$platillo->id}",
+                'fecha_hora' => Carbon::now(),
+            ]);
+
+            return redirect()->route('platillos.index')->with('success', 'Platillo actualizado exitosamente.');
+        });
     }
 
     public function toggle(Platillo $platillo)
