@@ -58,32 +58,34 @@ class ComandaController extends Controller
             'empleado_id' => 'required|exists:empleado,id',
         ]);
 
-        $nota = NotaReservacion::create([
-            'sucursal_id' => $request->sucursal_id,
-            'reservacion_id' => $request->reservacion_id,
-            'empleado_id' => $request->empleado_id,
-            'subtotal' => 0,
-            'descuento' => 0,
-            'impuestos' => 0,
-            'propina' => 0,
-            'total' => 0,
-            'fecha_emision' => Carbon::now(),
-        ]);
+        return DB::transaction(function () use ($request) {
+            $nota = NotaReservacion::create([
+                'sucursal_id' => $request->sucursal_id,
+                'reservacion_id' => $request->filled('reservacion_id') ? $request->reservacion_id : null,
+                'empleado_id' => $request->empleado_id,
+                'subtotal' => 0,
+                'descuento' => 0,
+                'impuestos' => 0,
+                'propina' => 0,
+                'total' => 0,
+                'fecha_emision' => Carbon::now(),
+            ]);
 
-        Pedido::create([
-            'nota_reservacion_id' => $nota->id,
-            'estatus' => 'abierto',
-            'fecha_hora' => Carbon::now(),
-        ]);
+            Pedido::create([
+                'nota_reservacion_id' => $nota->id,
+                'estatus' => 'abierto',
+                'fecha_hora' => Carbon::now(),
+            ]);
 
-        Bitacora::create([
-            'usuario_id' => Auth::id(),
-            'accion' => 'CREAR_NOTA',
-            'registro_id' => "NOTA_{$nota->id}",
-            'fecha_hora' => Carbon::now(),
-        ]);
+            Bitacora::create([
+                'usuario_id' => Auth::id(),
+                'accion' => 'CREAR_NOTA',
+                'registro_id' => "NOTA_{$nota->id}",
+                'fecha_hora' => Carbon::now(),
+            ]);
 
-        return redirect()->route('comandas.show', $nota->id)->with('success', 'Comanda abierta correctamente.');
+            return redirect()->route('comandas.show', $nota->id)->with('success', 'Comanda abierta correctamente.');
+        });
     }
 
     public function show($id)
