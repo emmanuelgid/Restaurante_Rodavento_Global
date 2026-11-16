@@ -29,7 +29,7 @@ class EmpleadoController extends Controller
             'apellidos' => 'required|string|max:150',
             'telefono' => 'nullable|string|max:20',
             'puesto' => 'required|string|max:60',
-            'sucursal_id' => 'required|exists:cadena.sucursal,id',
+            'sucursal_id' => 'required|exists:sucursal,id',
         ]);
 
         $empleado = Empleado::create([

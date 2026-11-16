@@ -45,41 +45,46 @@ class ReservacionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'cliente_id' => 'required|exists:cadena.cliente,id',
+            'cliente_id' => 'required|exists:cliente,id',
             'fecha_hora_inicio' => 'required|date',
             'horas_duracion' => 'nullable|integer|min:1|max:8',
             'cantidad_personas' => 'required|integer|min:1|max:50',
-            'mesa_sucursal_id' => 'required|exists:cadena.mesa_sucursal,id',
+            'mesa_sucursal_id' => 'required|exists:mesa_sucursal,id',
             'notas' => 'nullable|string',
         ]);
 
         $inicio = Carbon::parse($request->fecha_hora_inicio);
-        $fin = $inicio->copy()->addHours($request->horas_duracion ?? 2);
+        $horas = (int) ($request->horas_duracion ?: 2);
+        $fin = $inicio->copy()->addHours($horas);
 
-        $reservacion = Reservacion::create([
-            'cliente_id' => $request->cliente_id,
-            'fecha_hora_inicio' => $inicio,
-            'fecha_hora_final' => $fin,
-            'cantidad_personas' => $request->cantidad_personas,
-            'estatus' => 'confirmada',
-            'notas' => $request->notas,
-        ]);
+        return DB::transaction(function () use ($request, $inicio, $fin) {
+            $reservacion = Reservacion::create([
+                'cliente_id' => $request->cliente_id,
+                'fecha_hora_inicio' => $inicio,
+                'fecha_hora_final' => $fin,
+                'cantidad_personas' => (int) $request->cantidad_personas,
+                'estatus' => 'confirmada',
+                'notas' => $request->notas,
+            ]);
 
-        DB::table('cadena.reservacion_mesa')->insert([
-            'reservacion_id' => $reservacion->id,
-            'mesa_sucursal_id' => $request->mesa_sucursal_id,
-            'periodo' => "[\"{$inicio}\",\"{$fin}\")",
-            'bloquea' => true,
-        ]);
+            $periodoRange = "[\"{$inicio->format('Y-m-d H:i:sP')}\",\"{$fin->format('Y-m-d H:i:sP')}\")";
 
-        Bitacora::create([
-            'usuario_id' => Auth::id(),
-            'accion' => 'CREAR_RES',
-            'registro_id' => "RES_{$reservacion->id}",
-            'fecha_hora' => Carbon::now(),
-        ]);
+            DB::table('cadena.reservacion_mesa')->insert([
+                'reservacion_id' => $reservacion->id,
+                'mesa_sucursal_id' => $request->mesa_sucursal_id,
+                'periodo' => $periodoRange,
+                'bloquea' => true,
+            ]);
 
-        return redirect()->route('reservaciones.index')->with('success', 'Reservación creada y mesa asignada con éxito.');
+            Bitacora::create([
+                'usuario_id' => Auth::id(),
+                'accion' => 'CREAR_RES',
+                'registro_id' => "RES_{$reservacion->id}",
+                'fecha_hora' => Carbon::now(),
+            ]);
+
+            return redirect()->route('reservaciones.index')->with('success', 'Reservación creada y mesa asignada con éxito.');
+        });
     }
 
     public function show(Reservacion $reservacion)
@@ -113,7 +118,7 @@ class ReservacionController extends Controller
             NotaReservacion::create([
                 'sucursal_id' => $sucursalId,
                 'reservacion_id' => $reservacion->id,
-                'empleado_id' => Auth::user()->empleado_id,
+                'empleado_id' => Auth::user()->empleado_id ?? 1,
                 'subtotal' => 0,
                 'descuento' => 0,
                 'impuestos' => 0,

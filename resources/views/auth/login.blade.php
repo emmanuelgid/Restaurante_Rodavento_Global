@@ -22,7 +22,7 @@
                             <div class="input-group">
                                 <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
                                 <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
-                                       name="email" value="{{ old('email', 'admin@rodavento.com') }}" required autocomplete="email" autofocus>
+                                       name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="nombre@rodavento.com">
                             </div>
                             @error('email')
                                 <span class="invalid-feedback d-block" role="alert">
@@ -36,7 +36,7 @@
                             <div class="input-group">
                                 <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
                                 <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
-                                       name="password" value="rodavento123" required autocomplete="current-password">
+                                       name="password" required autocomplete="current-password" placeholder="••••••••">
                             </div>
                             @error('password')
                                 <span class="invalid-feedback d-block" role="alert">
@@ -54,15 +54,9 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-rv-primary w-100 py-2 fs-6 mb-3">
+                        <button type="submit" class="btn btn-rv-primary w-100 py-2 fs-6 mb-0">
                             <i class="bi bi-box-arrow-in-right me-1"></i> Entrar al Sistema
                         </button>
-
-                        <div class="alert alert-warning-subtle text-dark border border-warning-subtle small p-3 rounded mb-0">
-                            <div class="fw-bold mb-1"><i class="bi bi-key-fill text-warning me-1"></i> Credenciales de Demostración:</div>
-                            <div><strong>Usuario:</strong> <code>admin@rodavento.com</code></div>
-                            <div><strong>Contraseña:</strong> <code>rodavento123</code></div>
-                        </div>
                     </form>
                 </div>
             </div>
