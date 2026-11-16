@@ -59,4 +59,12 @@ class NotaReservacion extends Model
     {
         return $this->hasMany(MovimientoPuntos::class, 'nota_reservacion_id');
     }
+
+    public function getEstaCerradaAttribute(): bool
+    {
+        if ($this->pedidos->isEmpty()) {
+            return false;
+        }
+        return $this->pedidos->every(fn($p) => $p->estatus === 'cerrado');
+    }
 }

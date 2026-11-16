@@ -33,10 +33,24 @@ class ComandaController extends Controller
             $query->where('sucursal_id', $request->sucursal_id);
         }
 
-        $notas = $query->orderBy('id', 'desc')->paginate(10);
+        $todasNotas = $query->orderBy('id', 'desc')->get();
+
+        $comandasPendientes = $todasNotas->filter(function ($nota) {
+            return !$nota->esta_cerrada;
+        })->values();
+
+        $comandasFinalizadas = $todasNotas->filter(function ($nota) {
+            return $nota->esta_cerrada;
+        })->values();
+
         $sucursales = Sucursal::where('activa', true)->get();
 
-        return view('comandas.index', compact('notas', 'sucursales'));
+        return view('comandas.index', compact(
+            'comandasPendientes',
+            'comandasFinalizadas',
+            'todasNotas',
+            'sucursales'
+        ));
     }
 
     public function create()
