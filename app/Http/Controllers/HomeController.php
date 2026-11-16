@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\{
     Reservacion, Cliente, Platillo, Sucursal, Pedido,
-    NotaReservacion, Bitacora, Mesa, MesaSucursal
+    NotaReservacion, Bitacora, Mesa
 };
 use Carbon\Carbon;
 
@@ -22,32 +22,41 @@ class HomeController extends Controller
         $sucursalId = $request->query('sucursal_id');
         $sucursalActual = $sucursalId ? Sucursal::find($sucursalId) : null;
 
-        // Base queries
-        $reservacionesHoyQuery = Reservacion::whereDate('fecha_hora_inicio', Carbon::today());
+        // 1. Base queries para métricas
+        $reservacionesHoyQuery = Reservacion::whereDate('fecha_hora_inicio', Carbon::today())
+            ->whereNotIn('estatus', ['cancelada']);
         $totalReservacionesQuery = Reservacion::query();
         $comandasAbiertasQuery = Pedido::whereIn('estatus', ['abierto', 'en_proceso']);
         $ventasTotalesQuery = NotaReservacion::query();
         $totalMesasQuery = Mesa::where('activa', true);
         
+        // 2. Próximas Reservaciones (SOLO PENDIENTES / ACTIVAS, NUNCA FINALIZADAS NI CANCELADAS)
         $ultimasReservacionesQuery = Reservacion::with([
             'cliente',
             'mesasAsignadas.mesaSucursal.mesa',
             'mesasAsignadas.mesaSucursal.sucursal',
             'nota.sucursal'
-        ])->latest('id');
+        ])
+        ->whereNotIn('estatus', ['finalizada', 'cancelada', 'concluida'])
+        ->orderBy('fecha_hora_inicio', 'asc');
 
+        // 3. Monitoreo de Comandas VIVAS (SOLO ABIERTAS Y EN PROCESO, NUNCA CERRADAS)
         $comandasRecientesQuery = Pedido::with([
             'notaReservacion.sucursal',
             'detalles.platillo'
-        ])->latest('id');
+        ])
+        ->whereIn('estatus', ['abierto', 'en_proceso'])
+        ->latest('id');
 
-        // Filtrado por Sucursal / Lugar si fue seleccionado
+        // 4. Filtrado por Sucursal / Lugar (si fue seleccionado)
         if ($sucursalId) {
             $filtroRes = function ($q) use ($sucursalId) {
-                $q->whereHas('mesasAsignadas.mesaSucursal', function ($sq) use ($sucursalId) {
-                    $sq->where('sucursal_id', $sucursalId);
-                })->orWhereHas('nota', function ($sq) use ($sucursalId) {
-                    $sq->where('sucursal_id', $sucursalId);
+                $q->where(function ($sub) use ($sucursalId) {
+                    $sub->whereHas('mesasAsignadas.mesaSucursal', function ($sq) use ($sucursalId) {
+                        $sq->where('sucursal_id', $sucursalId);
+                    })->orWhereHas('nota', function ($sq) use ($sucursalId) {
+                        $sq->where('sucursal_id', $sucursalId);
+                    });
                 });
             };
 
@@ -70,6 +79,7 @@ class HomeController extends Controller
             });
         }
 
+        // Conteos y totales
         $reservacionesHoy = $reservacionesHoyQuery->count();
         $totalReservaciones = $totalReservacionesQuery->count();
         $comandasAbiertas = $comandasAbiertasQuery->count();
@@ -79,8 +89,9 @@ class HomeController extends Controller
         $totalPlatillos = Platillo::where('disponible', true)->count();
         $totalSucursales = $sucursales->count();
 
-        $ultimasReservaciones = $ultimasReservacionesQuery->take(6)->get();
-        $comandasRecientes = $comandasRecientesQuery->take(5)->get();
+        // Evitar duplicados con unique('id') y limitar registros
+        $ultimasReservaciones = $ultimasReservacionesQuery->get()->unique('id')->values()->take(6);
+        $comandasRecientes = $comandasRecientesQuery->get()->unique('id')->values()->take(6);
 
         $topClientes = Cliente::with('nivelLealtad')
             ->orderByDesc('puntos_saldo')

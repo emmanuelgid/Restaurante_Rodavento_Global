@@ -235,7 +235,8 @@
                                 @empty
                                 <tr>
                                     <td colspan="7" class="text-center py-4 text-muted">
-                                        No hay reservaciones registradas {{ $sucursalActual ? 'para ' . $sucursalActual->nombre : '' }}.
+                                        <i class="bi bi-calendar-check text-muted d-block fs-3 mb-1"></i>
+                                        No hay reservaciones próximas pendientes {{ $sucursalActual ? 'para ' . $sucursalActual->nombre : 'en este momento' }}.
                                     </td>
                                 </tr>
                                 @endforelse
@@ -300,7 +301,8 @@
                                 @empty
                                 <tr>
                                     <td colspan="6" class="text-center py-4 text-muted">
-                                        No hay comandas activas {{ $sucursalActual ? 'en ' . $sucursalActual->nombre : 'en este momento' }}.
+                                        <i class="bi bi-receipt text-muted d-block fs-3 mb-1"></i>
+                                        No hay comandas vivas activas {{ $sucursalActual ? 'en ' . $sucursalActual->nombre : 'en sala ni cocina' }}.
                                     </td>
                                 </tr>
                                 @endforelse
