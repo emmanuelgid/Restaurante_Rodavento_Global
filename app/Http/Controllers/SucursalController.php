@@ -23,7 +23,7 @@ class SucursalController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nombre' => 'required|string|max:100|unique:sucursal,nombre',
+            'nombre' => 'required|string|max:100|unique:cadena.sucursal,nombre',
             'direccion' => 'required|string|max:250',
             'telefono' => 'nullable|string|max:20',
         ]);
@@ -48,7 +48,7 @@ class SucursalController extends Controller
     public function update(Request $request, Sucursal $sucursal)
     {
         $request->validate([
-            'nombre' => 'required|string|max:100|unique:sucursal,nombre,' . $sucursal->id,
+            'nombre' => 'required|string|max:100|unique:cadena.sucursal,nombre,' . $sucursal->id,
             'direccion' => 'required|string|max:250',
             'telefono' => 'nullable|string|max:20',
             'activa' => 'boolean',

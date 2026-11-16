@@ -25,9 +25,9 @@ class MesaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'codigo_mesa' => 'required|string|max:10|unique:mesa,codigo_mesa',
+            'codigo_mesa' => 'required|string|max:10|unique:cadena.mesa,codigo_mesa',
             'capacidad' => 'required|integer|min:1|max:30',
-            'sucursal_id' => 'required|exists:sucursal,id',
+            'sucursal_id' => 'required|exists:cadena.sucursal,id',
         ]);
 
         $mesa = Mesa::create([

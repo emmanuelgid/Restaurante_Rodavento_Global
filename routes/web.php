@@ -47,7 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/comandas/{id}', [ComandaController::class, 'show'])->name('comandas.show');
     Route::post('/comandas/pedido/{pedidoId}/agregar', [ComandaController::class, 'agregarPlatillo'])->name('comandas.agregar');
     Route::post('/comandas/detalle/{detalleId}/ajustar', [ComandaController::class, 'ajustarPlatillo'])->name('comandas.ajustar');
-    Route::match(['get', 'post'], '/comandas/{notaId}/cerrar', [ComandaController::class, 'cerrarCuenta'])->name('comandas.cerrar');
+    Route::post('/comandas/{notaId}/cerrar', [ComandaController::class, 'cerrarCuenta'])->name('comandas.cerrar');
 
     // Clientes & Fidelización
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
