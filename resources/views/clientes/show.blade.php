@@ -116,11 +116,25 @@
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Alérgeno</label>
-                                    <select name="alergia_id" class="form-select" required>
+                                    <select name="alergia_id" id="modal_alergia_id_select" class="form-select" required>
                                         @foreach($alergiasDisponibles as $ad)
                                             <option value="{{ $ad->id }}">{{ $ad->nombre }}</option>
                                         @endforeach
+                                        <option value="nueva" class="fw-bold text-primary">➕ Registrar nueva alergia no listada...</option>
                                     </select>
+                                </div>
+                                <div class="mb-3" id="modal_nueva_alergia_container" style="display: none;">
+                                    <div class="p-3 bg-light rounded border border-warning">
+                                        <div class="fw-bold text-dark small mb-2"><i class="bi bi-shield-plus text-warning me-1"></i> Nueva Alergia al Catálogo</div>
+                                        <div class="mb-2">
+                                            <label class="form-label small text-muted mb-1">Nombre de la nueva alergia *</label>
+                                            <input type="text" name="nueva_alergia_nombre" id="modal_nueva_alergia_nombre" class="form-control" placeholder="Ej: Mariscos, Sulfitos, Fresas...">
+                                        </div>
+                                        <div>
+                                            <label class="form-label small text-muted mb-1">Descripción médica (opcional)</label>
+                                            <input type="text" name="nueva_alergia_descripcion" class="form-control" placeholder="Ej: Reacción alérgica">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Severidad</label>
@@ -255,4 +269,25 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modalSelect = document.getElementById('modal_alergia_id_select');
+    const modalNuevaContainer = document.getElementById('modal_nueva_alergia_container');
+    const modalNuevaInput = document.getElementById('modal_nueva_alergia_nombre');
+
+    if (modalSelect && modalNuevaContainer) {
+        modalSelect.addEventListener('change', function () {
+            if (this.value === 'nueva') {
+                modalNuevaContainer.style.display = 'block';
+                if (modalNuevaInput) modalNuevaInput.focus();
+            } else {
+                modalNuevaContainer.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+@endpush
 @endsection

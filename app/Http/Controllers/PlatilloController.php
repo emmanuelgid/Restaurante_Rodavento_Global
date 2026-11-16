@@ -55,8 +55,8 @@ class PlatilloController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:120',
-            'categoria_id' => 'required|exists:cadena.categoria_platillo,id',
-            'temporada_id' => 'nullable|exists:cadena.temporada,id',
+            'categoria_id' => 'required|exists:categoria_platillo,id',
+            'temporada_id' => 'nullable|exists:temporada,id',
             'precio' => 'required|numeric|min:0',
             'descripcion' => 'nullable|string',
             'imagen_url' => 'nullable|url|max:500',
@@ -118,8 +118,8 @@ class PlatilloController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:120',
-            'categoria_id' => 'required|exists:cadena.categoria_platillo,id',
-            'temporada_id' => 'nullable|exists:cadena.temporada,id',
+            'categoria_id' => 'required|exists:categoria_platillo,id',
+            'temporada_id' => 'nullable|exists:temporada,id',
             'precio' => 'required|numeric|min:0',
             'descripcion' => 'nullable|string',
             'imagen_url' => 'nullable|url|max:500',

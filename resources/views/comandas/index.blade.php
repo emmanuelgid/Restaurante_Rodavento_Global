@@ -43,14 +43,25 @@
         @forelse($notas as $nota)
         <div class="col-md-6 col-xl-4">
             <div class="card card-custom h-100 d-flex flex-column">
+                @php
+                    $estaCerrada = $nota->pedidos->isNotEmpty() && $nota->pedidos->every(fn($p) => $p->estatus === 'cerrado');
+                @endphp
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
                     <div>
                         <span class="fw-bold text-dark fs-6">Comanda #{{ $nota->id }}</span>
                         <div class="small text-muted">{{ $nota->sucursal->nombre ?? 'Sucursal' }}</div>
                     </div>
-                    <span class="badge {{ $nota->total > 0 ? 'bg-success' : 'bg-primary' }} fs-6">
-                        ${{ number_format($nota->total, 2) }}
-                    </span>
+                    <div class="text-end">
+                        @if($estaCerrada)
+                            <span class="badge bg-secondary mb-1 d-block">LIQUIDADA</span>
+                            <span class="badge bg-success fs-6">${{ number_format($nota->total, 2) }}</span>
+                        @else
+                            <span class="badge bg-warning text-dark mb-1 d-block">ABIERTA</span>
+                            <span class="badge {{ $nota->total > 0 ? 'bg-success' : 'bg-primary' }} fs-6">
+                                ${{ number_format($nota->total, 2) }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="card-body p-3 flex-grow-1">
@@ -92,9 +103,15 @@
 
                 <div class="card-footer bg-white py-3 border-top d-flex justify-content-between align-items-center">
                     <span class="small text-muted"><i class="bi bi-clock me-1"></i>{{ \Carbon\Carbon::parse($nota->fecha_emision)->format('d/m H:i') }}</span>
+                    @if($estaCerrada)
+                    <a href="{{ route('comandas.show', $nota->id) }}" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-check2-circle me-1"></i> Ver Ticket Liquidado
+                    </a>
+                    @else
                     <a href="{{ route('comandas.show', $nota->id) }}" class="btn btn-sm btn-rv-primary">
                         <i class="bi bi-arrow-right-circle me-1"></i> Gestionar Cuenta
                     </a>
+                    @endif
                 </div>
             </div>
         </div>
