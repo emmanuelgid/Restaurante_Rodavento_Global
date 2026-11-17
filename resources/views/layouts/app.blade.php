@@ -234,9 +234,6 @@
 
                     <!-- User and Branch Profile -->
                     <ul class="navbar-nav ms-auto align-items-center">
-                        <li class="nav-item me-3 text-white-50 d-none d-xl-block" style="font-size: 0.82rem;">
-                            <i class="bi bi-database-fill-check text-success"></i> Esquema <strong>cadena</strong> (38 Tablas Conectadas)
-                        </li>
                         <li class="nav-item dropdown">
                             <a id="navbarDropdown" class="nav-link dropdown-toggle text-white d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                 <div class="rounded-circle bg-warning text-dark fw-bold d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.85rem;">
@@ -309,7 +306,7 @@
         <footer class="mt-5 py-4 bg-white border-top text-center text-muted small">
             <div class="container">
                 <div class="fw-semibold text-dark mb-1">Hotel & Restaurante Rodavento — Sistema de Gestión Integral</div>
-                <div>PostgreSQL 18 & Laravel 12 &bull; 38 tablas sincronizadas &bull; Valle de Bravo, Estado de México</div>
+                <div>Valle de Bravo, Estado de México</div>
             </div>
         </footer>
     </div>
