@@ -59,13 +59,6 @@ class ClienteController extends Controller
         $request->validate([
             'nombres' => 'required|string|max:150',
             'apellidos' => 'required|string|max:150',
- respaldo_emanuel
-            'correo' => ['required', 'email', 'max:150', Rule::unique(Cliente::class, 'correo')],
-            'telefono' => 'nullable|string|max:20',
-            'fecha_nacimiento' => 'nullable|date',
-            'sucursal_alta_id' => ['required', Rule::exists(Sucursal::class, 'id')],
-            'nivel_lealtad_id' => ['required', Rule::exists(NivelLealtad::class, 'id')],
-=======
             'correo' => 'required|email|max:150|unique:cliente,correo',
             'telefono' => 'nullable|string|max:20',
             'fecha_nacimiento' => 'nullable|date',
@@ -73,7 +66,6 @@ class ClienteController extends Controller
             'nivel_lealtad_id' => 'required|exists:nivel_lealtad,id',
             'nueva_alergia_nombre' => 'nullable|string|max:80',
             'nueva_alergia_descripcion' => 'nullable|string',
- main
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -149,13 +141,8 @@ class ClienteController extends Controller
     public function agregarAlergia(Request $request, Cliente $cliente)
     {
         $request->validate([
-respaldo_emanuel
-            'alergia_id' => ['required', Rule::exists(Alergia::class, 'id')],
-            'severidad_id' => ['required', Rule::exists(SeveridadAlergia::class, 'id')],
-=======
             'alergia_id' => 'required',
             'severidad_id' => 'required|exists:severidad_alergia,id',
- main
             'notas' => 'nullable|string',
             'nueva_alergia_nombre' => 'nullable|string|max:80',
             'nueva_alergia_descripcion' => 'nullable|string',
