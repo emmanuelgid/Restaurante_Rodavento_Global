@@ -217,19 +217,36 @@
                                 <i class="bi bi-star-fill text-warning"></i> Lealtad VIP
                             </a>
                         </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link-custom dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-gear"></i> Más Módulos
-                            </a>
-                            <ul class="dropdown-menu shadow border-0">
-                                <li><a class="dropdown-item py-2" href="{{ route('sucursales.index') }}"><i class="bi bi-buildings me-2 text-primary"></i> Sucursales</a></li>
-                                <li><a class="dropdown-item py-2" href="{{ route('mesas.index') }}"><i class="bi bi-grid-3x3-gap me-2 text-success"></i> Mesas & Sala</a></li>
-                                <li><a class="dropdown-item py-2" href="{{ route('empleados.index') }}"><i class="bi bi-person-badge me-2 text-info"></i> Personal & Turnos</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item py-2" href="{{ route('bitacora.index') }}"><i class="bi bi-shield-lock me-2 text-danger"></i> Auditoría & Bitácora</a></li>
-                                <li><a class="dropdown-item py-2" href="{{ route('welcome') }}" target="_blank"><i class="bi bi-globe me-2 text-secondary"></i> Ver Sitio Web Público</a></li>
-                            </ul>
-                        </li>
+                        @canany(['sucursales.admin', 'mesas.ver', 'empleados.ver', 'auditoria.ver'])
+                            <li class="nav-item dropdown">
+                                <a class="nav-link-custom dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-gear"></i> Más Módulos
+                                </a>
+                                <ul class="dropdown-menu shadow border-0">
+                                    @can('sucursales.admin')
+                                        <li><a class="dropdown-item py-2" href="{{ route('sucursales.index') }}"><i class="bi bi-buildings me-2 text-primary"></i> Sucursales</a></li>
+                                    @endcan
+
+                                    @can('mesas.ver')
+                                        <li><a class="dropdown-item py-2" href="{{ route('mesas.index') }}"><i class="bi bi-grid-3x3-gap me-2 text-success"></i> Mesas & Sala</a></li>
+                                    @endcan
+
+                                    @can('empleados.ver')
+                                        <li><a class="dropdown-item py-2" href="{{ route('empleados.index') }}"><i class="bi bi-person-badge me-2 text-info"></i> Personal & Turnos</a></li>
+                                    @endcan
+
+                                    @if(auth()->user()->canAny(['sucursales.admin', 'mesas.ver', 'empleados.ver']) && auth()->user()->can('auditoria.ver'))
+                                        <li><hr class="dropdown-divider"></li>
+                                    @endif
+
+                                    @can('auditoria.ver')
+                                        <li><a class="dropdown-item py-2" href="{{ route('bitacora.index') }}"><i class="bi bi-shield-lock me-2 text-danger"></i> Auditoría & Bitácora</a></li>
+                                    @endcan
+
+                                    <li><a class="dropdown-item py-2" href="{{ route('welcome') }}" target="_blank"><i class="bi bi-globe me-2 text-secondary"></i> Ver Sitio Web Público</a></li>
+                                </ul>
+                            </li>
+                        @endcanany
                     </ul>
 
                     <!-- User and Branch Profile -->

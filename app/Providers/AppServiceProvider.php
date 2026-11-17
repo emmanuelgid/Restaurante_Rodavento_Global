@@ -6,6 +6,10 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Connectors\PostgresConnector;
 
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
+
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -36,5 +40,14 @@ class AppServiceProvider extends ServiceProvider
             $pdo = $connector->connect($config);
             return new \Illuminate\Database\PostgresConnection($pdo, $database, $prefix, $config);
         });
+
+        Gate::before(function (User $user, string $ability) {
+            if ($user->tienePermiso($ability)) {
+                return true;
+            }
+
+            return null;
+        });
+
     }
 }

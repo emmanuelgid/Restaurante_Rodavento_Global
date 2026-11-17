@@ -97,8 +97,8 @@ return [
             'prefix_indexes' => true,
             'search_path' => env('DB_SCHEMA', 'cadena,public'),
             'sslmode' => env('DB_SSLMODE', 'require'),
-            'options' => [],
         ],
+
         'cadena' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),

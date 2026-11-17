@@ -71,4 +71,35 @@ class User extends Authenticatable
     {
         return $this->hasMany(Bitacora::class, 'usuario_id');
     }
+
+    //Metodos para roles y permisos para cada rol
+
+    /**
+     * Verifica si el usuario está activo y si su rol tiene el permiso solicitado.
+     */
+    public function tienePermiso(string $codigoPermiso): bool
+    {
+        // Si el usuario está desactivado o no tiene rol asignado, denegar acceso
+        if (!$this->activo || !$this->rol) {
+            return false;
+        }
+
+        // Carga los permisos del rol una sola vez en memoria (evita consultas repetidas)
+        $this->rol->loadMissing('permisos');
+
+        return $this->rol->permisos->contains('codigo', $codigoPermiso);
+    }
+
+    /**
+     * (Opcional) Verifica si el usuario tiene alguno de los roles indicados por nombre.
+     */
+    public function tieneRol(array $roles): bool
+    {
+        if (!$this->activo || !$this->rol) {
+            return false;
+        }
+
+        return in_array($this->rol->nombre, $roles);
+    }
+
 }
