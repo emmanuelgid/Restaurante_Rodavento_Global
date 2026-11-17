@@ -95,16 +95,11 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
- respaldo_emanuel
-            'search_path' => env('DB_SCHEMA', 'public'),
-            'sslmode' => 'require',
-            'options' => [
-                // Forzamos el parámetro de endpoint directamente para evitar el fallo de la librería de Windows
-                PDO::ATTR_PERSISTENT => false,
-            ],
-=======
             'search_path' => env('DB_SCHEMA', 'cadena,public'),
             'sslmode' => env('DB_SSLMODE', 'require'),
+            'options' => [
+                PDO::ATTR_PERSISTENT => false,
+            ],
         ],
 
         'cadena' => [
@@ -120,7 +115,6 @@ return [
             'prefix_indexes' => true,
             'search_path' => env('DB_SCHEMA', 'cadena,public'),
             'sslmode' => env('DB_SSLMODE', 'require'),
- main
         ],
 
         'sqlsrv' => [
