@@ -59,6 +59,9 @@ Route::middleware('auth')->group(function () {
 
     // Programa de Lealtad
     Route::get('/lealtad', [LealtadController::class, 'index'])->name('lealtad.index');
+    Route::post('/lealtad/nivel/{nivelId}/beneficio/asignar', [LealtadController::class, 'asignarBeneficio'])->name('lealtad.asignarBeneficio');
+    Route::post('/lealtad/nivel/{nivelId}/beneficio/{beneficioId}/quitar', [LealtadController::class, 'quitarBeneficio'])->name('lealtad.quitarBeneficio');
+    Route::post('/lealtad/beneficio/crear', [LealtadController::class, 'crearBeneficio'])->name('lealtad.crearBeneficio');
 
     // Sucursales & Mesas
     Route::get('/sucursales', [SucursalController::class, 'index'])->name('sucursales.index');

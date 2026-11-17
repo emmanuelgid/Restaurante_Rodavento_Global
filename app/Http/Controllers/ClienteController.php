@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\{
     Cliente, NivelLealtad, Sucursal, Alergia, SeveridadAlergia,
     Preferencia, MovimientoPuntos, Bitacora, Consentimiento, SolicitudArco
@@ -26,9 +27,9 @@ class ClienteController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nombres', 'ILIKE', "%{$search}%")
-                  ->orWhere('apellidos', 'ILIKE', "%{$search}%")
-                  ->orWhere('correo', 'ILIKE', "%{$search}%")
-                  ->orWhere('telefono', 'LIKE', "%{$search}%");
+                    ->orWhere('apellidos', 'ILIKE', "%{$search}%")
+                    ->orWhere('correo', 'ILIKE', "%{$search}%")
+                    ->orWhere('telefono', 'LIKE', "%{$search}%");
             });
         }
 
