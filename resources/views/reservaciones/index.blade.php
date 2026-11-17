@@ -102,8 +102,12 @@
                                             {{ $ma->mesaSucursal->mesa->codigo_mesa ?? 'Mesa' }}
                                         </span>
                                     @endforeach
+                                @elseif(in_array($res->estatus, ['concluida', 'finalizada']))
+                                    <span class="text-secondary small fw-medium">Mesa liberada</span>
+                                @elseif($res->estatus === 'cancelada')
+                                    <span class="text-muted small">N/A</span>
                                 @else
-                                    <span class="text-danger small">No asignada</span>
+                                    <span class="text-danger small fw-semibold">No asignada</span>
                                 @endif
                             </td>
                             <td>

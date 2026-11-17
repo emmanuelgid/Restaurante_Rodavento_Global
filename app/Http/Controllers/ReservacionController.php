@@ -7,6 +7,7 @@ use App\Models\{Reservacion, Cliente, Sucursal, Mesa, MesaSucursal, ReservacionM
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\Temporada;
 
 class ReservacionController extends Controller
 {
@@ -38,8 +39,12 @@ class ReservacionController extends Controller
     {
         $clientes = Cliente::where('activo', true)->orderBy('nombres')->get();
         $sucursales = Sucursal::where('activa', true)->with('mesas.mesa')->get();
+        $hoy = Carbon::today();
+        $hayEventoActivo = Temporada::where('fecha_inicio', '<=', $hoy)
+                                    ->where('fecha_final', '>=', $hoy)
+                                    ->exists();
 
-        return view('reservaciones.create', compact('clientes', 'sucursales'));
+        return view('reservaciones.create', compact('clientes', 'sucursales', 'hayEventoActivo'));
     }
 
     public function store(Request $request)

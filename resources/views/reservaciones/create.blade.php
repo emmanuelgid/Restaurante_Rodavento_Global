@@ -41,9 +41,13 @@
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Duración Estimada</label>
                             <select name="horas_duracion" class="form-select">
-                                <option value="2">2 Horas</option>
-                                <option value="3">3 Horas</option>
-                                <option value="4">4 Horas (Sobremesa)</option>
+                                <option value="2" {{ old('horas_duracion') == '2' ? 'selected' : '' }}>2 Horas</option>
+                                <option value="3" {{ old('horas_duracion') == '3' ? 'selected' : '' }}>3 Horas</option>
+                                <option value="4" {{ old('horas_duracion') == '4' ? 'selected' : '' }}>4 Horas (Sobremesa)</option>
+                                
+                                @if($hayEventoActivo)
+                                    <option value="0" {{ old('horas_duracion') == '0' ? 'selected' : '' }}>Evento (Indefinido)</option>
+                                @endif
                             </select>
                         </div>
 

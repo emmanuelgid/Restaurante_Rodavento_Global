@@ -147,6 +147,10 @@
                                 @if($reservacion->mesasAsignadas->isNotEmpty())
                                     <span class="badge bg-dark fs-6">{{ $reservacion->mesasAsignadas->first()->mesaSucursal->mesa->codigo_mesa ?? 'Mesa' }}</span>
                                     <span class="small text-muted">({{ $reservacion->mesasAsignadas->first()->mesaSucursal->sucursal->nombre ?? 'Rodavento' }})</span>
+                                @elseif(in_array($reservacion->estatus, ['concluida', 'finalizada']))
+                                    <span class="badge bg-secondary-subtle text-secondary border">Mesa liberada</span>
+                                @elseif($reservacion->estatus === 'cancelada')
+                                    <span class="badge bg-light text-muted border">N/A</span>
                                 @else
                                     <span class="badge bg-danger">Sin Mesa</span>
                                 @endif
