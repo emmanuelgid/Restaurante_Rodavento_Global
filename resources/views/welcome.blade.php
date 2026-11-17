@@ -3,11 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotel Rodavento - Sistema Interno</title>
-    <!-- Bootstrap CSS -->
+    <meta name="theme-color" content="#0b1d26">
+
+    <title>Hotel Rodavento | Portal Interno</title>
+
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
@@ -16,105 +21,136 @@
             --bg-primary: #0b1d26;
             --accent-gold: #d4af37;
             --accent-gold-hover: #c5a028;
+            --white: #ffffff;
+            --muted: rgba(255,255,255,.55);
+            --border: rgba(255,255,255,.10);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            background-color: var(--bg-primary);
-            font-family: 'Inter', sans-serif;
+            margin: 0;
             min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: var(--white);
+            background:
+                radial-gradient(ellipse at 15% 15%, rgba(212,175,55,.09), transparent 35%),
+                radial-gradient(ellipse at 85% 85%, rgba(31,75,86,.22), transparent 40%),
+                var(--bg-primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0;
-            overflow: hidden;
-            color: #fff;
+            padding: 35px 20px;
+            overflow-x: hidden;
         }
 
-        /* --- PANTALLA DE CARGA CON ICONOS ROTATIVOS DE HOTEL --- */
+        /* DECORACIÓN DEL FONDO */
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            border: 1px solid rgba(212,175,55,.10);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        body::before {
+            width: 540px;
+            height: 540px;
+            top: -320px;
+            right: -180px;
+        }
+
+        body::after {
+            width: 420px;
+            height: 420px;
+            bottom: -290px;
+            left: -170px;
+        }
+
+        /* PANTALLA DE CARGA */
+
         #loader-screen {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-primary);
+            inset: 0;
+            z-index: 9999;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
+            align-items: center;
+            background: var(--bg-primary);
+            transition: opacity .7s ease, visibility .7s ease;
         }
 
-        .loader-brand {
+        .loader-logo {
             font-family: 'Playfair Display', serif;
             font-size: 2.5rem;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
             font-weight: 600;
-            margin-bottom: 0.25rem;
-            opacity: 0;
-            animation: fadeInDown 1s ease forwards 0.2s;
+            animation: fadeUp .8s ease both;
         }
 
         .loader-subtitle {
-            font-size: 0.75rem;
-            text-transform: uppercase;
+            margin-top: 8px;
+            font-size: .68rem;
             letter-spacing: 4px;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 2.5rem;
-            opacity: 0;
-            animation: fadeInUp 1s ease forwards 0.4s;
+            text-transform: uppercase;
+            color: var(--muted);
         }
 
-        .loader-icon-container {
-            font-size: 2.8rem;
+        .loader-decoration {
+            width: 55px;
+            height: 1px;
+            background: var(--accent-gold);
+            margin: 32px 0;
+        }
+
+        .loader-icon {
+            font-size: 2.5rem;
             color: var(--accent-gold);
-            height: 60px;
+            height: 55px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            animation: pulseIcon 1.2s infinite alternate;
+            animation: pulse 1.2s infinite alternate;
         }
 
-        .progress-bar-container {
-            width: 260px;
+        .progress-container {
+            width: 230px;
             height: 2px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
+            background: rgba(255,255,255,.12);
+            margin-top: 25px;
             overflow: hidden;
-            position: relative;
         }
 
-        .progress-bar-fill {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .progress-fill {
             height: 100%;
-            width: 0%;
-            background-color: var(--accent-gold);
-            animation: loadProgress 3.2s cubic-bezier(0.65, 0, 0.35, 1) forwards 0.3s;
+            width: 0;
+            background: var(--accent-gold);
+            animation: progress 2.8s ease forwards;
         }
 
         .loading-text {
-            font-size: 0.8rem;
-            letter-spacing: 2px;
-            color: rgba(255, 255, 255, 0.4);
-            margin-top: 1rem;
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: .7rem;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards 0.5s;
         }
 
-        /* --- CONTENIDO PRINCIPAL --- */
+        /* CONTENIDO PRINCIPAL */
+
         #main-content {
+            width: 100%;
+            max-width: 900px;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(20px);
-            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
-            width: 100%;
-            max-width: 440px;
-            padding: 1.5rem;
+            transform: translateY(18px);
+            transition: all .8s ease;
+            position: relative;
+            z-index: 1;
         }
 
         #main-content.active {
@@ -123,169 +159,535 @@
             transform: translateY(0);
         }
 
-        .auth-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        /* TARJETA PRINCIPAL */
+
+        .portal-card {
+            display: grid;
+            grid-template-columns: 1.05fr .95fr;
+            min-height: 480px;
+            border: 1px solid var(--border);
             border-radius: 12px;
+            overflow: hidden;
+            background: rgba(255,255,255,.025);
+            box-shadow: 0 30px 80px rgba(0,0,0,.38);
             backdrop-filter: blur(15px);
-            padding: 2.5rem;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
-            text-align: center;
         }
 
-        .auth-brand h2 {
-            font-family: 'Playfair Display', serif;
-            font-weight: 600;
+        /* PANEL DE IDENTIDAD */
+
+        .brand-panel {
+            padding: 55px 45px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            background:
+                linear-gradient(145deg, rgba(255,255,255,.045), transparent 65%);
+            border-right: 1px solid var(--border);
+        }
+
+        .brand-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-symbol {
+            width: 43px;
+            height: 43px;
+            border: 1px solid rgba(212,175,55,.55);
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+        }
+
+        .brand-top span {
+            font-size: .66rem;
             letter-spacing: 2px;
-            color: #fff;
-            margin-bottom: 0.25rem;
-            font-size: 1.8rem;
+            color: var(--muted);
+            text-transform: uppercase;
         }
 
-        .auth-brand p {
-            color: rgba(255, 255, 255, 0.45);
-            font-size: 0.75rem;
+        .brand-main {
+            margin-top: 55px;
+        }
+
+        .brand-overline {
+            color: var(--accent-gold);
+            font-size: .68rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .brand-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 500;
+            letter-spacing: 3px;
+            line-height: 1.1;
+            margin: 0;
+        }
+
+        .brand-line {
+            width: 65px;
+            height: 2px;
+            background: var(--accent-gold);
+            margin: 25px 0;
+        }
+
+        .brand-description {
+            max-width: 310px;
+            color: var(--muted);
+            font-size: .85rem;
+            line-height: 1.9;
+            font-weight: 300;
+        }
+
+        .brand-footer {
+            margin-top: 50px;
+            font-size: .65rem;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,.35);
+            text-transform: uppercase;
+        }
+
+        /* PANEL DE ACCESO */
+
+        .access-panel {
+            padding: 55px 42px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .access-label {
+            color: var(--accent-gold);
             text-transform: uppercase;
             letter-spacing: 2.5px;
-            margin-bottom: 2rem;
-        }
-
-        .btn-gold {
-            background-color: var(--accent-gold);
-            color: var(--bg-primary);
+            font-size: .65rem;
             font-weight: 600;
-            border-radius: 6px;
-            padding: 0.75rem;
-            width: 100%;
-            border: none;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
+            margin-bottom: 15px;
         }
 
-        .btn-gold:hover {
-            background-color: var(--accent-gold-hover);
-            color: var(--bg-primary);
-            transform: translateY(-1px);
-        }
-
-        .btn-outline-gold {
-            background: transparent;
-            color: var(--accent-gold);
-            border: 1px solid rgba(212, 175, 55, 0.4);
+        .access-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
             font-weight: 500;
-            border-radius: 6px;
-            padding: 0.75rem;
+            margin-bottom: 12px;
+        }
+
+        .access-description {
+            font-size: .79rem;
+            line-height: 1.8;
+            color: var(--muted);
+            margin-bottom: 35px;
+        }
+
+        /* BOTONES */
+
+        .access-options {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .btn-access {
             width: 100%;
+            min-height: 56px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 19px;
+            border-radius: 4px;
             text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            font-size: .78rem;
+            font-weight: 600;
+            letter-spacing: .5px;
+            transition: all .3s ease;
         }
 
-        .btn-outline-gold:hover {
-            background: rgba(212, 175, 55, 0.08);
+        .btn-primary-access {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border: 1px solid var(--accent-gold);
+        }
+
+        .btn-primary-access:hover {
+            background: var(--accent-gold-hover);
+            border-color: var(--accent-gold-hover);
+            color: var(--bg-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212,175,55,.15);
+        }
+
+        .btn-secondary-access {
+            background: transparent;
+            color: var(--white);
+            border: 1px solid rgba(212,175,55,.38);
+        }
+
+        .btn-secondary-access:hover {
+            background: rgba(212,175,55,.08);
+            color: var(--accent-gold);
             border-color: var(--accent-gold);
-            color: #fff;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
         }
 
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-15px); }
-            to { opacity: 1; transform: translateY(0); }
+        .btn-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .btn-content i {
+            font-size: 1.05rem;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+
+        .btn-arrow {
+            font-size: .9rem;
+            opacity: .7;
+            transition: transform .3s ease;
         }
-        @keyframes loadProgress {
-            0% { width: 0%; }
-            50% { width: 75%; }
-            100% { width: 100%; }
+
+        .btn-access:hover .btn-arrow {
+            transform: translateX(4px);
         }
-        @keyframes pulseIcon {
-            0% { transform: scale(0.95); opacity: 0.7; }
-            100% { transform: scale(1.05); opacity: 1; }
+
+        .access-note {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: rgba(255,255,255,.38);
+            font-size: .67rem;
+            line-height: 1.6;
+        }
+
+        .access-note i {
+            color: var(--accent-gold);
+            font-size: .9rem;
+        }
+
+        /* PIE DE PÁGINA */
+
+        .page-footer {
+            text-align: center;
+            margin-top: 25px;
+            color: rgba(255,255,255,.35);
+            font-size: .65rem;
+            letter-spacing: 1px;
+        }
+
+        .page-footer span {
+            color: var(--accent-gold);
+        }
+
+        /* ANIMACIONES */
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            from {
+                opacity: .6;
+                transform: scale(.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes progress {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        /* RESPONSIVE */
+
+        @media (max-width: 700px) {
+            body {
+                padding: 25px 15px;
+            }
+
+            .portal-card {
+                grid-template-columns: 1fr;
+            }
+
+            .brand-panel {
+                padding: 35px 30px 25px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .brand-main {
+                margin-top: 35px;
+            }
+
+            .brand-title {
+                font-size: 2.6rem;
+            }
+
+            .brand-footer {
+                margin-top: 30px;
+            }
+
+            .access-panel {
+                padding: 35px 30px;
+            }
+
+            .access-title {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .brand-panel,
+            .access-panel {
+                padding-left: 23px;
+                padding-right: 23px;
+            }
+
+            .brand-title {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<!-- PANTALLA DE CARGA CON ICONOS ROTATIVOS DE HOTEL Y GASTRONOMÍA -->
+<!-- PANTALLA DE CARGA -->
+
 <div id="loader-screen">
-    <div class="loader-brand">HOTEL RODAVENTO</div>
-    <div class="loader-subtitle">Preparando entorno operativo</div>
 
-    <div class="loader-icon-container">
-        <i id="loading-icon" class="bi bi-shop"></i>
+    <div class="loader-logo">RODAVENTO</div>
+    <div class="loader-subtitle">Hotel · Experiencias · Hospitalidad</div>
+
+    <div class="loader-decoration"></div>
+
+    <div class="loader-icon">
+        <i id="loading-icon" class="bi bi-building"></i>
     </div>
 
-    <div class="progress-bar-container">
-        <div class="progress-bar-fill"></div>
+    <div class="progress-container">
+        <div class="progress-fill"></div>
     </div>
-    <div id="loading-status-text" class="loading-text">Cargando instalaciones...</div>
+
+    <div id="loading-status-text" class="loading-text">
+        Preparando entorno operativo...
+    </div>
+
 </div>
 
-<!-- CONTENIDO PRINCIPAL CON LOS BOTONES DE ENLACE -->
-<div id="main-content">
-    <div class="auth-card">
-        <div class="auth-brand">
-            <h2>RODAVENTO</h2>
-            <p>Portal de Gestión Interna</p>
+
+<!-- PORTAL PRINCIPAL -->
+
+<main id="main-content">
+
+    <section class="portal-card">
+
+        <!-- IDENTIDAD DEL HOTEL -->
+
+        <div class="brand-panel">
+
+            <div class="brand-top">
+                <div class="brand-symbol">
+                    <i class="bi bi-buildings"></i>
+                </div>
+
+                <span>Portal institucional</span>
+            </div>
+
+            <div class="brand-main">
+
+                <div class="brand-overline">
+                    Bienvenido a
+                </div>
+
+                <h1 class="brand-title">
+                    HOTEL<br>RODAVENTO
+                </h1>
+
+                <div class="brand-line"></div>
+
+                <p class="brand-description">
+                    Plataforma de gestión interna destinada
+                    al acceso y administración de las
+                    operaciones del hotel.
+                </p>
+
+            </div>
+
+            <div class="brand-footer">
+                Excelencia en cada detalle
+            </div>
+
         </div>
-        <p class="text-white-50 small mb-4">Seleccione una opción para continuar con el acceso al sistema de operaciones.</p>
 
-        <div class="d-grid gap-3">
-            <!-- Enlace directo a login.blade.php -->
-            <a href="{{ route('login') }}" class="btn btn-gold">
-                <i class="bi bi-box-arrow-in-right me-2"></i> Iniciar Sesión
-            </a>
 
-            <!-- Enlace directo a register.blade.php -->
-            <a href="{{ route('register') }}" class="btn btn-outline-gold">
-                <i class="bi bi-person-plus me-2"></i> Registrar Empleado
-            </a>
+        <!-- ACCESO AL SISTEMA -->
+
+        <div class="access-panel">
+
+            <div class="access-label">
+                Sistema de operaciones
+            </div>
+
+            <h2 class="access-title">
+                Acceso al portal
+            </h2>
+
+            <p class="access-description">
+                Seleccione una opción para ingresar a la
+                plataforma o registrar un nuevo empleado
+                en el sistema.
+            </p>
+
+
+            <div class="access-options">
+
+                <!-- INICIAR SESIÓN -->
+
+                <a href="{{ route('login') }}"
+                   class="btn-access btn-primary-access">
+
+                        <span class="btn-content">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            Iniciar sesión
+                        </span>
+
+                    <i class="bi bi-arrow-right btn-arrow"></i>
+
+                </a>
+
+
+                <!-- REGISTRAR EMPLEADO -->
+
+                <a href="{{ route('register') }}"
+                   class="btn-access btn-secondary-access">
+
+                        <span class="btn-content">
+                            <i class="bi bi-person-plus"></i>
+                            Registrar empleado
+                        </span>
+
+                    <i class="bi bi-arrow-right btn-arrow"></i>
+
+                </a>
+
+            </div>
+
+
+            <div class="access-note">
+                <i class="bi bi-shield-lock"></i>
+
+                <span>
+                        Acceso exclusivo para personal autorizado
+                        de Hotel Rodavento.
+                    </span>
+            </div>
+
         </div>
-    </div>
-</div>
 
-<!-- Script de Animaciones y Transiciones de Carga -->
+    </section>
+
+
+    <!-- PIE DE PÁGINA -->
+
+    <footer class="page-footer">
+        HOTEL RODAVENTO <span>·</span> SISTEMA INTERNO
+    </footer>
+
+</main>
+
+
+<!-- ANIMACIONES DE CARGA -->
+
 <script>
+
     const loadingIcons = [
-        { icon: 'bi-shop', text: 'Cargando instalaciones...' },
-        { icon: 'bi-cup-hot-fill', text: 'Sincronizando restaurante & bar...' },
-        { icon: 'bi-egg-fried', text: 'Preparando áreas gastronómicas...' },
-        { icon: 'bi-moon-stars-fill', text: 'Configurando suites de hospedaje...' },
-        { icon: 'bi-airplane-fill', text: 'Cargando experiencias y tours...' }
+        {
+            icon: 'bi-building',
+            text: 'Preparando instalaciones...'
+        },
+        {
+            icon: 'bi-cup-hot',
+            text: 'Configurando restaurante y bar...'
+        },
+        {
+            icon: 'bi-egg-fried',
+            text: 'Preparando áreas gastronómicas...'
+        },
+        {
+            icon: 'bi-moon-stars',
+            text: 'Configurando suites de hospedaje...'
+        },
+        {
+            icon: 'bi-compass',
+            text: 'Cargando experiencias y servicios...'
+        }
     ];
 
     let currentStep = 0;
+
     const iconElement = document.getElementById('loading-icon');
     const textElement = document.getElementById('loading-status-text');
 
+    const loader = document.getElementById('loader-screen');
+    const mainContent = document.getElementById('main-content');
+
     const iconInterval = setInterval(() => {
+
         currentStep = (currentStep + 1) % loadingIcons.length;
-        iconElement.className = `bi ${loadingIcons[currentStep].icon}`;
+
+        iconElement.className = 'bi ' + loadingIcons[currentStep].icon;
+
         textElement.textContent = loadingIcons[currentStep].text;
-    }, 650);
+
+    }, 550);
+
 
     window.addEventListener('DOMContentLoaded', () => {
+
         setTimeout(() => {
+
             clearInterval(iconInterval);
-            const loader = document.getElementById('loader-screen');
-            const mainContent = document.getElementById('main-content');
 
             loader.style.opacity = '0';
             loader.style.visibility = 'hidden';
 
             setTimeout(() => {
                 mainContent.classList.add('active');
-            }, 200);
-        }, 3200);
+            }, 150);
+
+        }, 2800);
+
     });
+
 </script>
+
 </body>
 </html>
+
