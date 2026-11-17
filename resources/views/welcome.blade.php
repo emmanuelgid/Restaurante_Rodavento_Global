@@ -1,139 +1,291 @@
-@extends('layouts.app_landingpage')
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Rodavento - Sistema Interno</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
-@section('title', 'Hotel Rodavento - Valle de Bravo')
-
-@push('styles')
     <style>
-        .hero-section {
+        :root {
+            --bg-primary: #0b1d26;
+            --accent-gold: #d4af37;
+            --accent-gold-hover: #c5a028;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
-            background: linear-gradient(180deg, rgba(11,29,38,0.4) 0%, rgba(11,29,38,0.85) 80%, #0b1d26 100%),
-            url("{{ asset('images/Hotel.jpeg') }}") center/cover no-repeat;
             display: flex;
             align-items: center;
-            position: relative;
-            padding-top: 100px;
+            justify-content: center;
+            margin: 0;
+            overflow: hidden;
+            color: #fff;
         }
 
-        .subtitle-tag {
-            letter-spacing: 4px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .subtitle-tag::before {
-            content: '';
-            width: 50px;
-            height: 2px;
-
-        }
-
-        .feature-section {
-            padding: 100px 0;
-            position: relative;
-        }
-
-        .big-number {
-            font-size: 14rem;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.05);
-            position: absolute;
-            top: -60px;
-            left: -20px;
-            z-index: 0;
-            line-height: 1;
-            user-select: none;
-            font-family: 'Playfair Display', serif;
-        }
-
-        .feature-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .img-container img {
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            object-fit: cover;
+        /* --- PANTALLA DE CARGA CON ICONOS ROTATIVOS DE HOTEL --- */
+        #loader-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: 500px;
-            border-radius: 4px;
+            height: 100%;
+            background-color: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .loader-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            letter-spacing: 4px;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            opacity: 0;
+            animation: fadeInDown 1s ease forwards 0.2s;
+        }
+
+        .loader-subtitle {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards 0.4s;
+        }
+
+        .loader-icon-container {
+            font-size: 2.8rem;
+            color: var(--accent-gold);
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            animation: pulseIcon 1.2s infinite alternate;
+        }
+
+        .progress-bar-container {
+            width: 260px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent-gold);
+            animation: loadProgress 3.2s cubic-bezier(0.65, 0, 0.35, 1) forwards 0.3s;
+        }
+
+        .loading-text {
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 1rem;
+            text-transform: uppercase;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 0.5s;
+        }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        #main-content {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 100%;
+            max-width: 440px;
+            padding: 1.5rem;
+        }
+
+        #main-content.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            backdrop-filter: blur(15px);
+            padding: 2.5rem;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
+            text-align: center;
+        }
+
+        .auth-brand h2 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: #fff;
+            margin-bottom: 0.25rem;
+            font-size: 1.8rem;
+        }
+
+        .auth-brand p {
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            margin-bottom: 2rem;
+        }
+
+        .btn-gold {
+            background-color: var(--accent-gold);
+            color: var(--bg-primary);
+            font-weight: 600;
+            border-radius: 6px;
+            padding: 0.75rem;
+            width: 100%;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gold:hover {
+            background-color: var(--accent-gold-hover);
+            color: var(--bg-primary);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline-gold {
+            background: transparent;
+            color: var(--accent-gold);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 0.75rem;
+            width: 100%;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-gold:hover {
+            background: rgba(212, 175, 55, 0.08);
+            border-color: var(--accent-gold);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes loadProgress {
+            0% { width: 0%; }
+            50% { width: 75%; }
+            100% { width: 100%; }
+        }
+        @keyframes pulseIcon {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            100% { transform: scale(1.05); opacity: 1; }
         }
     </style>
-@endpush
+</head>
+<body>
 
-@section('content')
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <div class="row justify-content-center text-center">
-                <div class="col-lg-9 col-xl-8">
-                    <div class="subtitle-tag text-accent justify-content-center mb-3">
-                        --- Un refugio en el bosque ---
-                    </div>
-                    <h1 class="display-2 text-white fw-semibold mb-4">
-                        Conecta con la Naturaleza y el Lujo
-                    </h1>
-                    <a href="#experiencia" class="btn-link-accent fs-6">
-                        Descubre Rodavento <i class="bi bi-arrow-down"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- PANTALLA DE CARGA CON ICONOS ROTATIVOS DE HOTEL Y GASTRONOMÍA -->
+<div id="loader-screen">
+    <div class="loader-brand">HOTEL RODAVENTO</div>
+    <div class="loader-subtitle">Preparando entorno operativo</div>
 
-    <!-- Secciones del contenido -->
-    <div class="container py-5">
-
-        <!-- Sección 01 -->
-        <section class="feature-section" id="experiencia">
-            <div class="row align-items-center gy-5">
-                <div class="col-lg-6 order-lg-1">
-                    <div class="feature-content pe-lg-5">
-                        <span class="big-number">01</span>
-                        <div class="subtitle-tag text-accent mb-3">EL ORIGEN</div>
-                        <h2 class="display-5 text-white mb-4">¿Qué experiencia buscas vivir?</h2>
-                        <p class="text-white-50 mb-4 lh-lg">
-                            Ubicado en el corazón del bosque de Valle de Bravo, Hotel Rodavento ofrece un concepto único de alojamiento en suites rodeadas de pinos y junto a nuestro lago privado.
-                        </p>
-                        <a href="#" class="btn-link-accent">
-                            Leer más <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-5 offset-lg-1 order-lg-2">
-                    <div class="img-container">
-                        <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=800&auto=format&fit=crop" alt="Hotel Rodavento Vista">
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Sección 02 -->
-        <section class="feature-section" id="habitaciones">
-            <div class="row align-items-center gy-5">
-                <div class="col-lg-5 order-lg-1">
-                    <div class="img-container">
-                        <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=800&auto=format&fit=crop" alt="Suites Rodavento">
-                    </div>
-                </div>
-                <div class="col-lg-6 offset-lg-1 order-lg-2">
-                    <div class="feature-content ps-lg-4">
-                        <span class="big-number">02</span>
-                        <div class="subtitle-tag text-accent mb-3">HOSPEDAJE EXCLUSIVO</div>
-                        <h2 class="display-5 text-white mb-4">Nuestras Suites en el Bosque</h2>
-                        <p class="text-white-50 mb-4 lh-lg">
-                            Diseñadas para fusionarse con el entorno natural sin perder la elegancia y la comodidad. Cada suite cuenta con terrazas privadas, chimeneas y vistas impresionantes.
-                        </p>
-                        <a href="#" class="btn-link-accent">
-                            Ver disponibilidad <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
+    <div class="loader-icon-container">
+        <i id="loading-icon" class="bi bi-shop"></i>
     </div>
-@endsection
+
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill"></div>
+    </div>
+    <div id="loading-status-text" class="loading-text">Cargando instalaciones...</div>
+</div>
+
+<!-- CONTENIDO PRINCIPAL CON LOS BOTONES DE ENLACE -->
+<div id="main-content">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <h2>RODAVENTO</h2>
+            <p>Portal de Gestión Interna</p>
+        </div>
+        <p class="text-white-50 small mb-4">Seleccione una opción para continuar con el acceso al sistema de operaciones.</p>
+
+        <div class="d-grid gap-3">
+            <!-- Enlace directo a login.blade.php -->
+            <a href="{{ route('login') }}" class="btn btn-gold">
+                <i class="bi bi-box-arrow-in-right me-2"></i> Iniciar Sesión
+            </a>
+
+            <!-- Enlace directo a register.blade.php -->
+            <a href="{{ route('register') }}" class="btn btn-outline-gold">
+                <i class="bi bi-person-plus me-2"></i> Registrar Empleado
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Script de Animaciones y Transiciones de Carga -->
+<script>
+    const loadingIcons = [
+        { icon: 'bi-shop', text: 'Cargando instalaciones...' },
+        { icon: 'bi-cup-hot-fill', text: 'Sincronizando restaurante & bar...' },
+        { icon: 'bi-egg-fried', text: 'Preparando áreas gastronómicas...' },
+        { icon: 'bi-moon-stars-fill', text: 'Configurando suites de hospedaje...' },
+        { icon: 'bi-airplane-fill', text: 'Cargando experiencias y tours...' }
+    ];
+
+    let currentStep = 0;
+    const iconElement = document.getElementById('loading-icon');
+    const textElement = document.getElementById('loading-status-text');
+
+    const iconInterval = setInterval(() => {
+        currentStep = (currentStep + 1) % loadingIcons.length;
+        iconElement.className = `bi ${loadingIcons[currentStep].icon}`;
+        textElement.textContent = loadingIcons[currentStep].text;
+    }, 650);
+
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            clearInterval(iconInterval);
+            const loader = document.getElementById('loader-screen');
+            const mainContent = document.getElementById('main-content');
+
+            loader.style.opacity = '0';
+            loader.style.visibility = 'hidden';
+
+            setTimeout(() => {
+                mainContent.classList.add('active');
+            }, 200);
+        }, 3200);
+    });
+</script>
+</body>
+</html>

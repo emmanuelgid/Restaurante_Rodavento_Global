@@ -1,0 +1,77 @@
+/* Estilos exclusivos para el Acceso de Empleados - Hotel Rodavento */
+body.auth-employee-body {
+    background-color: #0b1d26;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    color: #fff;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 450px;
+    padding: 2rem;
+}
+
+.auth-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    padding: 2.5rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.auth-brand {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-brand h2 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+.auth-brand p {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.form-control-custom {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+}
+
+.form-control-custom:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #d4af37;
+    color: #fff;
+    box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.15);
+}
+
+.btn-auth-submit {
+    background-color: #d4af37;
+    color: #0b1d26;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 0.75rem;
+    width: 100%;
+    border: none;
+    transition: background 0.3s ease;
+}
+
+.btn-auth-submit:hover {
+    background-color: #c5a028;
+    color: #0b1d26;
+}
