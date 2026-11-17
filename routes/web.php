@@ -47,7 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/comandas/{id}', [ComandaController::class, 'show'])->name('comandas.show');
     Route::post('/comandas/pedido/{pedidoId}/agregar', [ComandaController::class, 'agregarPlatillo'])->name('comandas.agregar');
     Route::post('/comandas/detalle/{detalleId}/ajustar', [ComandaController::class, 'ajustarPlatillo'])->name('comandas.ajustar');
-    Route::post('/comandas/{notaId}/cerrar', [ComandaController::class, 'cerrarCuenta'])->name('comandas.cerrar');
+    Route::match(['get', 'post'], '/comandas/{notaId}/cerrar', [ComandaController::class, 'cerrarCuenta'])->name('comandas.cerrar');
 
     // Clientes & Fidelización
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
@@ -59,6 +59,9 @@ Route::middleware('auth')->group(function () {
 
     // Programa de Lealtad
     Route::get('/lealtad', [LealtadController::class, 'index'])->name('lealtad.index');
+    Route::post('/lealtad/nivel/{nivelId}/beneficio/asignar', [LealtadController::class, 'asignarBeneficio'])->name('lealtad.asignarBeneficio');
+    Route::post('/lealtad/nivel/{nivelId}/beneficio/{beneficioId}/quitar', [LealtadController::class, 'quitarBeneficio'])->name('lealtad.quitarBeneficio');
+    Route::post('/lealtad/beneficio/crear', [LealtadController::class, 'crearBeneficio'])->name('lealtad.crearBeneficio');
 
     // Sucursales & Mesas
     Route::get('/sucursales', [SucursalController::class, 'index'])->name('sucursales.index');

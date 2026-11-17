@@ -9,6 +9,7 @@ use App\Models\{
     ReglaPuntos, Bitacora
 };
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ComandaController extends Controller
@@ -32,10 +33,24 @@ class ComandaController extends Controller
             $query->where('sucursal_id', $request->sucursal_id);
         }
 
-        $notas = $query->orderBy('id', 'desc')->paginate(10);
+        $todasNotas = $query->orderBy('id', 'desc')->get();
+
+        $comandasPendientes = $todasNotas->filter(function ($nota) {
+            return !$nota->esta_cerrada;
+        })->values();
+
+        $comandasFinalizadas = $todasNotas->filter(function ($nota) {
+            return $nota->esta_cerrada;
+        })->values();
+
         $sucursales = Sucursal::where('activa', true)->get();
 
-        return view('comandas.index', compact('notas', 'sucursales'));
+        return view('comandas.index', compact(
+            'comandasPendientes',
+            'comandasFinalizadas',
+            'todasNotas',
+            'sucursales'
+        ));
     }
 
     public function create()
@@ -52,37 +67,39 @@ class ComandaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'sucursal_id' => 'required|exists:cadena.sucursal,id',
-            'reservacion_id' => 'nullable|exists:cadena.reservacion,id|unique:cadena.nota_reservacion,reservacion_id',
-            'empleado_id' => 'required|exists:cadena.empleado,id',
+            'sucursal_id' => 'required|exists:sucursal,id',
+            'reservacion_id' => 'nullable|exists:reservacion,id|unique:nota_reservacion,reservacion_id',
+            'empleado_id' => 'required|exists:empleado,id',
         ]);
 
-        $nota = NotaReservacion::create([
-            'sucursal_id' => $request->sucursal_id,
-            'reservacion_id' => $request->reservacion_id,
-            'empleado_id' => $request->empleado_id,
-            'subtotal' => 0,
-            'descuento' => 0,
-            'impuestos' => 0,
-            'propina' => 0,
-            'total' => 0,
-            'fecha_emision' => Carbon::now(),
-        ]);
+        return DB::transaction(function () use ($request) {
+            $nota = NotaReservacion::create([
+                'sucursal_id' => $request->sucursal_id,
+                'reservacion_id' => $request->filled('reservacion_id') ? $request->reservacion_id : null,
+                'empleado_id' => $request->empleado_id,
+                'subtotal' => 0,
+                'descuento' => 0,
+                'impuestos' => 0,
+                'propina' => 0,
+                'total' => 0,
+                'fecha_emision' => Carbon::now(),
+            ]);
 
-        Pedido::create([
-            'nota_reservacion_id' => $nota->id,
-            'estatus' => 'abierto',
-            'fecha_hora' => Carbon::now(),
-        ]);
+            Pedido::create([
+                'nota_reservacion_id' => $nota->id,
+                'estatus' => 'abierto',
+                'fecha_hora' => Carbon::now(),
+            ]);
 
-        Bitacora::create([
-            'usuario_id' => Auth::id(),
-            'accion' => 'CREAR_NOTA',
-            'registro_id' => "NOTA_{$nota->id}",
-            'fecha_hora' => Carbon::now(),
-        ]);
+            Bitacora::create([
+                'usuario_id' => Auth::id(),
+                'accion' => 'CREAR_NOTA',
+                'registro_id' => "NOTA_{$nota->id}",
+                'fecha_hora' => Carbon::now(),
+            ]);
 
-        return redirect()->route('comandas.show', $nota->id)->with('success', 'Comanda abierta correctamente.');
+            return redirect()->route('comandas.show', $nota->id)->with('success', 'Comanda abierta correctamente.');
+        });
     }
 
     public function show($id)
@@ -109,7 +126,7 @@ class ComandaController extends Controller
     public function agregarPlatillo(Request $request, $pedidoId)
     {
         $request->validate([
-            'platillo_id' => 'required|exists:cadena.platillo,id',
+            'platillo_id' => 'required|exists:platillo,id',
             'cantidad' => 'required|integer|min:1|max:20',
             'es_cortesia' => 'nullable|boolean',
             'notas' => 'nullable|string|max:250',
@@ -172,6 +189,10 @@ class ComandaController extends Controller
 
     public function cerrarCuenta(Request $request, $notaId)
     {
+        if ($request->isMethod('get')) {
+            return redirect()->route('comandas.show', $notaId);
+        }
+
         $request->validate([
             'descuento' => 'nullable|numeric|min:0',
             'propina' => 'nullable|numeric|min:0',
@@ -179,68 +200,110 @@ class ComandaController extends Controller
             'comentarios' => 'nullable|string',
         ]);
 
-        $nota = NotaReservacion::with('pedidos.detalles')->findOrFail($notaId);
+        return DB::transaction(function () use ($request, $notaId) {
+            $nota = NotaReservacion::with('pedidos.detalles', 'reservacion.cliente')->findOrFail($notaId);
 
-        $subtotal = 0;
-        foreach ($nota->pedidos as $ped) {
-            foreach ($ped->detalles as $det) {
-                $subtotal += $det->subtotal;
+            $subtotal = 0;
+            foreach ($nota->pedidos as $ped) {
+                foreach ($ped->detalles as $det) {
+                    $subtotal += $det->subtotal;
+                }
             }
-        }
 
-        $descuento = (float) ($request->descuento ?? 0);
-        $base = max(0, $subtotal - $descuento);
-        $impuestos = round($base * 0.16, 2);
-        $propina = (float) ($request->propina ?? 0);
-        $total = $base + $impuestos + $propina;
+            $descuento = (float) ($request->descuento ?? 0);
+            $base = max(0, $subtotal - $descuento);
+            $impuestos = round($base * 0.16, 2);
+            $propina = (float) ($request->propina ?? 0);
+            $total = $base + $impuestos + $propina;
 
-        $nota->update([
-            'subtotal' => $subtotal,
-            'descuento' => $descuento,
-            'impuestos' => $impuestos,
-            'propina' => $propina,
-            'total' => $total,
-            'calificacion' => $request->calificacion,
-            'comentarios' => $request->comentarios,
-        ]);
+            $nota->update([
+                'subtotal' => $subtotal,
+                'descuento' => $descuento,
+                'impuestos' => $impuestos,
+                'propina' => $propina,
+                'total' => $total,
+                'calificacion' => $request->calificacion,
+                'comentarios' => $request->comentarios,
+            ]);
 
-        // Cerrar los pedidos
-        foreach ($nota->pedidos as $ped) {
-            $ped->estatus = 'cerrado';
-            $ped->save();
-        }
+            // Cerrar los pedidos
+            foreach ($nota->pedidos as $ped) {
+                $ped->estatus = 'cerrado';
+                $ped->save();
+            }
 
-        // Si hay reservación y cliente, abonar puntos de lealtad
-        if ($nota->reservacion && $nota->reservacion->cliente) {
-            $cliente = $nota->reservacion->cliente;
-            $regla = ReglaPuntos::where('activa', true)->latest('vigencia_inicio')->first();
-            $montoPorPunto = $regla ? (float) $regla->monto_por_punto : 10.0;
-            $puntosGanados = (int) floor($base / max(1, $montoPorPunto));
+            // Si hay reservación asociada, marcar como finalizada
+            if ($nota->reservacion) {
+                $nota->reservacion->estatus = 'finalizada';
+                $nota->reservacion->save();
+            }
 
-            if ($puntosGanados > 0) {
-                MovimientoPuntos::create([
-                    'cliente_id' => $cliente->id,
-                    'nota_reservacion_id' => $nota->id,
-                    'regla_id' => $regla ? $regla->id : null,
-                    'puntos' => $puntosGanados,
-                    'tipo' => 'acumulacion',
-                    'fecha' => Carbon::now(),
+            $puntosGanados = 0;
+            $saldoTotal = 0;
+            $clienteNombre = null;
+            $clienteId = null;
+            $nivelNombre = null;
+
+            // Si hay reservación y cliente, abonar puntos de lealtad
+            if ($nota->reservacion && $nota->reservacion->cliente) {
+                $cliente = $nota->reservacion->cliente;
+                $clienteNombre = $cliente->nombre_completo;
+                $clienteId = $cliente->id;
+                $nivelNombre = $cliente->nivelLealtad ? $cliente->nivelLealtad->nombre : 'Estándar';
+
+                $regla = ReglaPuntos::where('activa', true)->latest('vigencia_inicio')->first();
+                $montoPorPunto = $regla ? (float) $regla->monto_por_punto : 10.0;
+                $puntosGanados = (int) floor($base / max(1, $montoPorPunto));
+
+                $movimientoExistente = MovimientoPuntos::where('nota_reservacion_id', $nota->id)->first();
+                if (!$movimientoExistente) {
+                    if ($puntosGanados > 0) {
+                        MovimientoPuntos::create([
+                            'cliente_id' => $cliente->id,
+                            'nota_reservacion_id' => $nota->id,
+                            'regla_id' => $regla ? $regla->id : null,
+                            'puntos' => $puntosGanados,
+                            'tipo' => 'acumulacion',
+                            'fecha' => Carbon::now(),
+                        ]);
+
+                        $cliente->puntos_saldo += $puntosGanados;
+                        $cliente->puntos_acumulados += $puntosGanados;
+                        $cliente->save();
+                    }
+                } else {
+                    $puntosGanados = $movimientoExistente->puntos;
+                }
+
+                $saldoTotal = $cliente->puntos_saldo;
+            }
+
+            Bitacora::create([
+                'usuario_id' => Auth::id(),
+                'accion' => 'COBRO_NOTA',
+                'registro_id' => "NOTA_{$nota->id}_TOTAL_{$total}",
+                'fecha_hora' => Carbon::now(),
+            ]);
+
+            $successMsg = "Cuenta cerrada exitosamente por $" . number_format($total, 2);
+            if ($clienteNombre) {
+                $successMsg .= " • Se acreditaron +{$puntosGanados} puntos a {$clienteNombre}. Saldo actual: " . number_format($saldoTotal) . " puntos (Nivel {$nivelNombre}).";
+            }
+
+            return redirect()->route('comandas.show', $nota->id)
+                ->with('success', $successMsg)
+                ->with('cuenta_cerrada_modal', [
+                    'nota_id' => $nota->id,
+                    'total' => $total,
+                    'descuento' => $descuento,
+                    'propina' => $propina,
+                    'cliente_nombre' => $clienteNombre,
+                    'cliente_id' => $clienteId,
+                    'puntos_ganados' => $puntosGanados,
+                    'saldo_total' => $saldoTotal,
+                    'nivel_lealtad' => $nivelNombre,
                 ]);
-
-                $cliente->puntos_saldo += $puntosGanados;
-                $cliente->puntos_acumulados += $puntosGanados;
-                $cliente->save();
-            }
-        }
-
-        Bitacora::create([
-            'usuario_id' => Auth::id(),
-            'accion' => 'COBRO_NOTA',
-            'registro_id' => "NOTA_{$nota->id}_TOTAL_{$total}",
-            'fecha_hora' => Carbon::now(),
-        ]);
-
-        return redirect()->route('comandas.show', $nota->id)->with('success', "Cuenta cerrada exitosamente por un total de $" . number_format($total, 2));
+        });
     }
 
     private function recalcularTotales($notaId)

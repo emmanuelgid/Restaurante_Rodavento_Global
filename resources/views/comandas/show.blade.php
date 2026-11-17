@@ -25,6 +25,23 @@
         </div>
     </div>
 
+    @php
+        $estaCerrada = $nota->pedidos->isNotEmpty() && $nota->pedidos->every(fn($p) => $p->estatus === 'cerrado');
+    @endphp
+
+    @if($estaCerrada)
+    <div class="alert alert-success d-flex justify-content-between align-items-center mb-4 p-3 shadow-sm border-0">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-patch-check-fill fs-2 me-3 text-success"></i>
+            <div>
+                <h6 class="fw-bold mb-0">Cuenta Liquidada & Comanda Cerrada</h6>
+                <div class="small text-muted">Total liquidado: ${{ number_format($nota->total, 2) }} MXN &bull; Propina: ${{ number_format($nota->propina, 2) }} MXN</div>
+            </div>
+        </div>
+        <span class="badge bg-success px-3 py-2 fs-6"><i class="bi bi-check2-circle me-1"></i> LIQUIDADA</span>
+    </div>
+    @endif
+
     <!-- Advertencia de Alergias del Huésped -->
     @if($nota->reservacion && $nota->reservacion->cliente && $nota->reservacion->cliente->alergias->isNotEmpty())
     <div class="alert alert-danger shadow-sm py-2 px-3 mb-3 d-flex align-items-center">
@@ -184,6 +201,96 @@
                 </div>
             </div>
 
+            @if($estaCerrada)
+            <!-- Panel de Comanda Liquidada y Saldo de Puntos VIP -->
+            <div class="card card-custom p-4 border-success border-2 shadow-sm mb-4">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill text-success fs-2 me-3"></i>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark">Comanda Liquidada & Cerrada</h5>
+                            <span class="small text-muted">Folio de cobro comanda #{{ $nota->id }}</span>
+                        </div>
+                    </div>
+                    <span class="badge bg-success px-3 py-2 fs-6">COBRADA</span>
+                </div>
+
+                @if($nota->reservacion && $nota->reservacion->cliente)
+                    @php $cliente = $nota->reservacion->cliente; @endphp
+                    <!-- Tarjeta de Puntos VIP -->
+                    <div class="p-3 mb-3 bg-light rounded border border-warning-subtle">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-dark"><i class="bi bi-award-fill text-warning me-1"></i> Programa de Lealtad Rodavento</span>
+                            <span class="badge bg-dark text-warning">{{ $cliente->nivelLealtad->nombre ?? 'VIP' }}</span>
+                        </div>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-sm-6">
+                                <div class="small text-muted">Huésped Titular:</div>
+                                <div class="fw-bold text-dark fs-6">{{ $cliente->nombre_completo }}</div>
+                            </div>
+                            <div class="col-sm-6 text-sm-end">
+                                <div class="small text-muted">Puntos Bonificados por esta Cuenta:</div>
+                                <div class="fw-bold text-success fs-5">
+                                    +{{ number_format($nota->movimientosPuntos->sum('puntos') ?: floor(($nota->subtotal - $nota->descuento) / 10)) }} pts
+                                </div>
+                            </div>
+                            <div class="col-12 mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-primary">Saldo Total Disponible del Cliente:</span>
+                                <span class="badge bg-primary fs-5 px-3 py-2">{{ number_format($cliente->puntos_saldo) }} PUNTOS VIP</span>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center pt-2">
+                    <a href="{{ route('comandas.index') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Volver a Comandas
+                    </a>
+                    @if($nota->reservacion && $nota->reservacion->cliente)
+                    <a href="{{ route('clientes.show', $nota->reservacion->cliente->id) }}" class="btn btn-rv-gold">
+                        <i class="bi bi-person-badge me-1"></i> Ver Expediente del Huésped
+                    </a>
+                    @endif
+                </div>
+
+                <!-- Acordeón para ajustes contables si se requiere -->
+                <div class="mt-4 pt-3 border-top">
+                    <a class="small text-muted text-decoration-none" data-bs-toggle="collapse" href="#ajusteCobroCollapse" role="button">
+                        <i class="bi bi-pencil-square me-1"></i> Modificar datos de facturación / propina (Auditoría)
+                    </a>
+                    <div class="collapse mt-3" id="ajusteCobroCollapse">
+                        <form method="POST" action="{{ route('comandas.cerrar', $nota->id) }}">
+                            @csrf
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Descuento ($ MXN)</label>
+                                    <input type="number" step="0.50" name="descuento" class="form-control form-control-sm" value="{{ $nota->descuento }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Propina ($ MXN)</label>
+                                    <input type="number" step="0.50" name="propina" class="form-control form-control-sm" value="{{ $nota->propina }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">Calificación</label>
+                                    <select name="calificacion" class="form-select form-select-sm">
+                                        <option value="5" {{ $nota->calificacion == 5 ? 'selected' : '' }}>⭐⭐⭐⭐⭐ Excelente (5)</option>
+                                        <option value="4" {{ $nota->calificacion == 4 ? 'selected' : '' }}>⭐⭐⭐⭐ Muy Bueno (4)</option>
+                                        <option value="3" {{ $nota->calificacion == 3 ? 'selected' : '' }}>⭐⭐⭐ Regular (3)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label small">Comentarios</label>
+                                    <input type="text" name="comentarios" class="form-control form-control-sm" value="{{ $nota->comentarios }}">
+                                </div>
+                                <div class="col-12 text-end pt-2">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Actualizar Cobro</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            @else
             <!-- Formulario de Cobro y Cierre -->
             <div class="card card-custom p-4">
                 <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-cash-coin me-2 text-success"></i> Cerrar Cuenta y Facturar</h5>
@@ -218,6 +325,7 @@
                     </div>
                 </form>
             </div>
+            @endif
         </div>
 
         <!-- Columna Derecha: Catálogo Rápido para Agregar a Comanda -->
@@ -225,47 +333,123 @@
             <div class="card card-custom p-4">
                 <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-plus-circle me-2 text-warning"></i> Enviar Orden a Cocina / Barra</h5>
 
-                @php $firstPedido = $nota->pedidos->first(); @endphp
-                @if($firstPedido)
-                <form method="POST" action="{{ route('comandas.agregar', $firstPedido->id) }}">
-                    @csrf
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Seleccionar Platillo *</label>
-                        <select name="platillo_id" class="form-select form-select-lg" required>
-                            <option value="">Selecciona del menú...</option>
-                            @foreach($platillosDisponibles as $plat)
-                                <option value="{{ $plat->id }}">
-                                    [{{ $plat->categoria ? $plat->categoria->nombre : 'General' }}] {{ $plat->nombre }} — ${{ number_format($plat->precio, 2) }}
-                                </option>
-                            @endforeach
-                        </select>
+                @if($estaCerrada)
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-lock-fill fs-1 text-secondary mb-2 d-block"></i>
+                        <h6 class="fw-bold text-dark">Comanda Liquidada y Cerrada</h6>
+                        <p class="small text-muted mb-3">No es posible agregar más órdenes a una cuenta cerrada. Si el comensal desea ordenar más productos, abra una nueva comanda.</p>
+                        <a href="{{ route('comandas.create') }}" class="btn btn-sm btn-rv-primary">
+                            <i class="bi bi-plus-circle me-1"></i> Abrir Nueva Comanda
+                        </a>
                     </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label class="form-label fw-semibold">Cantidad *</label>
-                            <input type="number" name="cantidad" class="form-control" value="1" min="1" max="20" required>
+                @else
+                    @php $firstPedido = $nota->pedidos->first(); @endphp
+                    @if($firstPedido)
+                    <form method="POST" action="{{ route('comandas.agregar', $firstPedido->id) }}">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Seleccionar Platillo *</label>
+                            <select name="platillo_id" class="form-select form-select-lg" required>
+                                <option value="">Selecciona del menú...</option>
+                                @foreach($platillosDisponibles as $plat)
+                                    <option value="{{ $plat->id }}">
+                                        [{{ $plat->categoria ? $plat->categoria->nombre : 'General' }}] {{ $plat->nombre }} — ${{ number_format($plat->precio, 2) }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="col-6 d-flex align-items-end">
-                            <div class="form-check pb-2">
-                                <input class="form-check-input" type="checkbox" name="es_cortesia" value="1" id="es_cortesia">
-                                <label class="form-check-label fw-semibold small" for="es_cortesia">¿Es Cortesía?</label>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Cantidad *</label>
+                                <input type="number" name="cantidad" class="form-control" value="1" min="1" max="20" required>
+                            </div>
+                            <div class="col-6 d-flex align-items-end">
+                                <div class="form-check pb-2">
+                                    <input class="form-check-input" type="checkbox" name="es_cortesia" value="1" id="es_cortesia">
+                                    <label class="form-check-label fw-semibold small" for="es_cortesia">¿Es Cortesía?</label>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Instrucciones Especiales para Cocina</label>
-                        <input type="text" name="notas" class="form-control" placeholder="Ej. Sin cebolla, término medio, aderezo aparte...">
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Instrucciones Especiales para Cocina</label>
+                            <input type="text" name="notas" class="form-control" placeholder="Ej. Sin cebolla, término medio, aderezo aparte...">
+                        </div>
 
-                    <button type="submit" class="btn btn-rv-gold w-100 py-2 fw-semibold">
-                        <i class="bi bi-send-fill me-1"></i> Agregar a Comanda
-                    </button>
-                </form>
+                        <button type="submit" class="btn btn-rv-gold w-100 py-2 fw-semibold">
+                            <i class="bi bi-send-fill me-1"></i> Agregar a Comanda
+                        </button>
+                    </form>
+                    @endif
                 @endif
             </div>
         </div>
     </div>
 </div>
+
+@if(session('cuenta_cerrada_modal'))
+    @php $modalData = session('cuenta_cerrada_modal'); @endphp
+    <!-- Modal Celebración de Cierre y Puntos -->
+    <div class="modal fade" id="modalCuentaCerrada" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-success text-white py-3">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-check-circle-fill me-2"></i> ¡Comanda #{{ $modalData['nota_id'] }} Cerrada con Éxito!
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div class="display-6 fw-bold text-success mb-1">
+                        ${{ number_format($modalData['total'], 2) }} <span class="fs-6 text-muted">MXN</span>
+                    </div>
+                    <div class="text-muted small mb-3">Cuenta liquidada y facturada correctamente</div>
+
+                    @if($modalData['cliente_nombre'])
+                        <div class="p-3 bg-light rounded border border-warning my-3 text-start">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold text-dark"><i class="bi bi-person-fill text-primary me-1"></i> {{ $modalData['cliente_nombre'] }}</span>
+                                <span class="badge bg-dark text-warning">{{ $modalData['nivel_lealtad'] ?? 'VIP' }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-1">
+                                <span class="text-muted small">Puntos ganados en esta cuenta:</span>
+                                <span class="fw-bold text-success fs-5">+{{ number_format($modalData['puntos_ganados']) }} pts</span>
+                            </div>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between align-items-center py-1">
+                                <span class="fw-bold text-primary">NUEVO SALDO DE PUNTOS:</span>
+                                <span class="badge bg-primary fs-5 px-3 py-2">{{ number_format($modalData['saldo_total']) }} PUNTOS VIP</span>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer d-flex justify-content-between bg-light">
+                    <a href="{{ route('comandas.index') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Ir a Comandas
+                    </a>
+                    @if(!empty($modalData['cliente_id']))
+                    <a href="{{ route('clientes.show', $modalData['cliente_id']) }}" class="btn btn-rv-gold">
+                        <i class="bi bi-person-badge me-1"></i> Ver Expediente del Huésped
+                    </a>
+                    @else
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Aceptar</button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var modalEl = document.getElementById('modalCuentaCerrada');
+    if (modalEl) {
+        var myModal = new bootstrap.Modal(modalEl);
+        myModal.show();
+    }
+});
+</script>
+@endpush
 @endsection
