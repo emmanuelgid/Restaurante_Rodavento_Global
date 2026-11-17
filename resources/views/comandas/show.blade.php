@@ -347,12 +347,21 @@
                     @if($firstPedido)
                     <form method="POST" action="{{ route('comandas.agregar', $firstPedido->id) }}">
                         @csrf
+                        
+                        <!-- Campo de Búsqueda Rápida y Seleccionador -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Seleccionar Platillo *</label>
-                            <select name="platillo_id" class="form-select form-select-lg" required>
-                                <option value="">Selecciona del menú...</option>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-white text-muted border-end-0">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" id="buscarPlatillo" class="form-control border-start-0 ps-0" placeholder="Buscar por nombre o categoría...">
+                            </div>
+
+                            <select name="platillo_id" id="selectPlatillo" class="form-select form-select-lg" required>
+                                <option value="" disabled selected hidden>Selecciona del menú...</option>
                                 @foreach($platillosDisponibles as $plat)
-                                    <option value="{{ $plat->id }}">
+                                    <<option value="{{ $plat->id }}">
                                         [{{ $plat->categoria ? $plat->categoria->nombre : 'General' }}] {{ $plat->nombre }} — ${{ number_format($plat->precio, 2) }}
                                     </option>
                                 @endforeach
@@ -444,10 +453,46 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Modal de comanda cerrada
     var modalEl = document.getElementById('modalCuentaCerrada');
     if (modalEl) {
         var myModal = new bootstrap.Modal(modalEl);
         myModal.show();
+    }
+
+    // Buscador en tiempo real de platillos
+    const inputBuscar = document.getElementById('buscarPlatillo');
+    const selectPlatillo = document.getElementById('selectPlatillo');
+
+    if (inputBuscar && selectPlatillo) {
+        const opcionesOriginales = Array.from(selectPlatillo.options);
+
+        inputBuscar.addEventListener('input', function () {
+            const busqueda = this.value.toLowerCase().trim();
+
+            // Limpiar selector manteniendo la opción por defecto
+            selectPlatillo.innerHTML = '';
+            
+            opcionesOriginales.forEach(function (opcion) {
+                // Conservar siempre la opción "Selecciona del menú..."
+                if (opcion.value === '') {
+                    selectPlatillo.appendChild(opcion);
+                    return;
+                }
+
+                // Filtrar por coincidencias en el texto (Nombre, Categoría, Precio)
+                if (opcion.text.toLowerCase().includes(busqueda)) {
+                    selectPlatillo.appendChild(opcion);
+                }
+            });
+
+            // Seleccionar automáticamente la primera opción filtrada si hay coincidencias
+            if (busqueda !== '' && selectPlatillo.options.length > 1) {
+                selectPlatillo.selectedIndex = 1;
+            } else {
+                selectPlatillo.selectedIndex = 0;
+            }
+        });
     }
 });
 </script>
