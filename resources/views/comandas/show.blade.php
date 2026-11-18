@@ -75,7 +75,11 @@
                                     <th>P. Unitario</th>
                                     <th>Importe</th>
                                     <th>Estatus</th>
-                                    <th>Ajuste</th>
+                                    @if(!$estaCerrada)
+                                        <th>Ajuste</th>
+                                    @else
+                                        <th>Auditoría</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -166,52 +170,59 @@
                                                         {{ $det->estatus }}
                                                     </span>
                                                 </td>
+                                                <!-- Sección B: Bloqueo de Ajustes en Cuentas Liquidadas -->
                                                 <td>
-                                                    @if($det->estatus !== 'cancelado')
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#ajusteModal{{ $det->id }}" title="Cancelar / Cortesía">
-                                                        <i class="bi bi-tools"></i>
-                                                    </button>
+                                                    @if(!$estaCerrada)
+                                                        @if($det->estatus !== 'cancelado')
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#ajusteModal{{ $det->id }}" title="Cancelar / Cortesía">
+                                                            <i class="bi bi-tools"></i>
+                                                        </button>
 
-                                                    <!-- Modal Ajuste -->
-                                                    <div class="modal fade" id="ajusteModal{{ $det->id }}" tabindex="-1" aria-hidden="true">
-                                                        <div class="modal-dialog">
-                                                            <div class="modal-content">
-                                                                <form method="POST" action="{{ route('comandas.ajustar', $det->id) }}">
-                                                                    @csrf
-                                                                    <div class="modal-header">
-                                                                        <h5 class="modal-title fw-bold">Ajustar Platillo: {{ $det->platillo ? $det->platillo->nombre : '' }}</h5>
-                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                                    </div>
-                                                                    <div class="modal-body">
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label fw-semibold">Tipo de Ajuste</label>
-                                                                            <select name="tipo" class="form-select" required>
-                                                                                <option value="cancelacion">Cancelación de platillo</option>
-                                                                                <option value="cortesia">Marcar como Cortesía (Gerencia/VIP)</option>
-                                                                                <option value="merma">Merma de cocina / Error de comanda</option>
-                                                                            </select>
+                                                        <!-- Modal Ajuste -->
+                                                        <div class="modal fade" id="ajusteModal{{ $det->id }}" tabindex="-1" aria-hidden="true">
+                                                            <div class="modal-dialog">
+                                                                <div class="modal-content">
+                                                                    <form method="POST" action="{{ route('comandas.ajustar', $det->id) }}">
+                                                                        @csrf
+                                                                        <div class="modal-header">
+                                                                            <h5 class="modal-title fw-bold">Ajustar Platillo: {{ $det->platillo ? $det->platillo->nombre : '' }}</h5>
+                                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                                         </div>
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label fw-semibold">Cantidad a afectar</label>
-                                                                            <input type="number" name="cantidad" class="form-control" min="1" max="{{ $det->cantidad }}" value="1" required>
+                                                                        <div class="modal-body">
+                                                                            <div class="mb-3">
+                                                                                <label class="form-label fw-semibold">Tipo de Ajuste</label>
+                                                                                <select name="tipo" class="form-select" required>
+                                                                                    <option value="cancelacion">Cancelación de platillo</option>
+                                                                                    <option value="cortesia">Marcar como Cortesía (Gerencia/VIP)</option>
+                                                                                    <option value="merma">Merma de cocina / Error de comanda</option>
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="mb-3">
+                                                                                <label class="form-label fw-semibold">Cantidad a afectar</label>
+                                                                                <input type="number" name="cantidad" class="form-control" min="1" max="{{ $det->cantidad }}" value="1" required>
+                                                                            </div>
+                                                                            <div class="mb-3">
+                                                                                <label class="form-label fw-semibold">Motivo del Ajuste *</label>
+                                                                                <input type="text" name="motivo" class="form-control" placeholder="Ej. Cambio de opinión del huésped / Plato quemado" required>
+                                                                            </div>
+                                                                            <div class="mb-3">
+                                                                                <label class="form-label fw-semibold">Destino</label>
+                                                                                <input type="text" name="destino" class="form-control" value="cocina" required>
+                                                                            </div>
                                                                         </div>
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label fw-semibold">Motivo del Ajuste *</label>
-                                                                            <input type="text" name="motivo" class="form-control" placeholder="Ej. Cambio de opinión del huésped / Plato quemado" required>
+                                                                        <div class="modal-footer">
+                                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                                                            <button type="submit" class="btn btn-danger">Confirmar Ajuste y Auditar</button>
                                                                         </div>
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label fw-semibold">Destino</label>
-                                                                            <input type="text" name="destino" class="form-control" value="cocina" required>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="modal-footer">
-                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                                                        <button type="submit" class="btn btn-danger">Confirmar Ajuste y Auditar</button>
-                                                                    </div>
-                                                                </form>
+                                                                    </form>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                        @endif
+                                                    @else
+                                                        <span class="badge bg-light text-muted border py-1 px-2" title="Cuenta liquidada. Sin modificaciones permitidas.">
+                                                            <i class="bi bi-lock-fill me-1"></i>Cerrado
+                                                        </span>
                                                     @endif
                                                 </td>
                                             </tr>
@@ -381,7 +392,7 @@
                 <form method="POST" action="{{ route('comandas.cerrar', $nota->id) }}">
                     @csrf
                     <div class="row g-3">
-                        <div class="col-md-6 contenedor-descuento">
+                        <div class="col-md-6 contenedor-descuento" data-subtotal="{{ $nota->subtotal ?? 0 }}">
                             <label class="form-label fw-semibold">Descuento Aplicado</label>
                             
                             <!-- Recuadros de Selección Rápida (%) -->
@@ -398,14 +409,13 @@
                                 <input type="number" class="form-control input-pct-descuento" placeholder="Ej. 17" min="0" max="100" step="1">
                                 
                                 <span class="input-group-text bg-light text-muted small">$ MXN</span>
-                                <!-- Se cambia step="0.50" a step="any" -->
                                 <input type="number" step="any" name="descuento" class="form-control fw-bold text-danger input-monto-descuento" value="{{ $nota->descuento }}" placeholder="0.00">
                             </div>
-                            <small class="text-muted d-block mt-1">Selecciona un porcentaje</small>
+                            <small class="text-muted d-block mt-1">Selecciona un porcentaje, escribe uno libre o ingresa el monto en pesos.</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Propina Sugerida ($ MXN)</label>
-                            <input type="number" step="0.50" name="propina" class="form-control" value="{{ $nota->propina ?: round($nota->subtotal * 0.15, 2) }}">
+                            <input type="number" step="any" name="propina" class="form-control" value="{{ $nota->propina ?: round($nota->subtotal * 0.15, 2) }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Calificación del Servicio</label>
@@ -486,7 +496,7 @@
                             </div>
                         </div>
 
-                        <!-- Botones de Tiempo de Servicio (NUEVO) -->
+                        <!-- Botones de Tiempo de Servicio -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold d-block">Tiempo de Servicio / Marcha *</label>
                             <div class="btn-group w-100" role="group" aria-label="Tiempos de servicio">
