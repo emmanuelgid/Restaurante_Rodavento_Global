@@ -69,7 +69,7 @@
                             </select>
 
                             <!-- Panel Dinámico: Nueva Categoría -->
-                            <div id="nueva_categoria_container" class="mt-2 p-3 bg-light rounded border border-success" style="display: {{ old('categoria_id') == 'nueva' ? 'block' : 'none' }};">
+                            <div id="nueva_categoria_container" class="mt-2 p-3 bg-light rounded border border-success {{ old('categoria_id') == 'nueva' ? '' : 'd-none' }}">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <span class="fw-bold text-success small"><i class="bi bi-bookmark-plus me-1"></i> Registrar Nueva Categoría</span>
                                     <span class="badge bg-success-subtle text-success border border-success small">Se guardará automáticamente</span>
@@ -77,7 +77,7 @@
                                 <div class="row g-2">
                                     <div class="col-12">
                                         <label class="form-label small text-muted mb-1">Nombre de la Categoría *</label>
-                                        <input type="text" name="nueva_categoria_nombre" id="nueva_categoria_nombre" class="form-control form-control-sm" placeholder="Ej: Especialidades del Chef, Coctelería de Autor, Brasas & Ahumados..." value="{{ old('nueva_categoria_nombre') }}">
+                                        <input type="text" name="nueva_categoria_nombre" id="nueva_categoria_nombre" class="form-control form-control-sm" placeholder="Ej: Especialidades del Chef, Coctelería de Autor..." value="{{ old('nueva_categoria_nombre') }}">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label small text-muted mb-1">Descripción (Opcional)</label>
@@ -108,7 +108,7 @@
                             </select>
 
                             <!-- Panel Dinámico: Nueva Temporada -->
-                            <div id="nueva_temporada_container" class="mt-2 p-3 bg-light rounded border border-primary" style="display: {{ old('temporada_id') == 'nueva' ? 'block' : 'none' }};">
+                            <div id="nueva_temporada_container" class="mt-2 p-3 bg-light rounded border border-primary {{ old('temporada_id') == 'nueva' ? '' : 'd-none' }}">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <span class="fw-bold text-primary small"><i class="bi bi-calendar-event me-1"></i> Registrar Nueva Temporada o Rama</span>
                                     <span class="badge bg-primary-subtle text-primary border border-primary small">Vigencia gastronómica</span>

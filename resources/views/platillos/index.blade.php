@@ -76,7 +76,7 @@
                                 <h5 class="card-title fw-bold text-dark fs-6 mb-0">{{ $pl->nombre }}</h5>
                                 <div class="fs-6 fw-bold text-success">${{ number_format($pl->precio, 2) }}</div>
                             </div>
-                            <p class="card-text text-muted small flex-grow-1 mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            <p class="card-text text-muted small flex-grow-1 mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                                 {{ $pl->descripcion }}
                             </p>
 
