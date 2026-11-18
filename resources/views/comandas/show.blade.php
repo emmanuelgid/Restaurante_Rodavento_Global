@@ -15,7 +15,7 @@
                 @endif
             </div>
             <p class="text-muted small mb-0">
-                Atendido por: <strong>{{ $nota->empleado ? $nota->empleado->nombre_completo : 'Mesero' }}</strong> &bull; Emisión: {{ \Carbon\Carbon::parse($nota->fecha_emision)->format('d/m/Y H:i') }}
+                Atendido por: <strong>{{ $nota->empleado ? $nota->empleado->nombre_completo : 'Mesero' }}</strong> • Emisión: {{ \Carbon\Carbon::parse($nota->fecha_emision)->format('d/m/Y H:i') }}
             </p>
         </div>
         <div class="mt-3 mt-md-0 d-flex gap-2">
@@ -35,7 +35,7 @@
             <i class="bi bi-patch-check-fill fs-2 me-3 text-success"></i>
             <div>
                 <h6 class="fw-bold mb-0">Cuenta Liquidada & Comanda Cerrada</h6>
-                <div class="small text-muted">Total liquidado: ${{ number_format($nota->total, 2) }} MXN &bull; Propina: ${{ number_format($nota->propina, 2) }} MXN</div>
+                <div class="small text-muted">Total liquidado: ${{ number_format($nota->total, 2) }} MXN • Propina: ${{ number_format($nota->propina, 2) }} MXN</div>
             </div>
         </div>
         <span class="badge bg-success px-3 py-2 fs-6"><i class="bi bi-check2-circle me-1"></i> LIQUIDADA</span>
@@ -70,7 +70,7 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light small text-uppercase">
                                 <tr>
-                                    <th>Platillo</th>
+                                    <th>Platillo / Instrucción</th>
                                     <th>Cant.</th>
                                     <th>P. Unitario</th>
                                     <th>Importe</th>
@@ -79,93 +79,135 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @php $hasItems = false; @endphp
-                                @foreach($nota->pedidos as $pedido)
-                                    @foreach($pedido->detalles as $det)
-                                        @php $hasItems = true; @endphp
-                                        <tr>
-                                            <td>
-                                                <div class="fw-bold text-dark">{{ $det->platillo ? $det->platillo->nombre : 'Platillo' }}</div>
-                                                @if($det->notas)
-                                                    <small class="text-danger"><i class="bi bi-chat-dots me-1"></i>{{ $det->notas }}</small>
-                                                @endif
-                                                @if($det->es_cortesia)
-                                                    <span class="badge bg-warning text-dark small ms-1">Cortesía de la Casa</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-dark fs-6">{{ $det->cantidad }}</span>
-                                                @if($det->cantidad_cancelada > 0)
-                                                    <small class="text-danger d-block">(-{{ $det->cantidad_cancelada }})</small>
-                                                @endif
-                                            </td>
-                                            <td>${{ number_format($det->precio_unitario, 2) }}</td>
-                                            <td class="fw-bold text-dark">
-                                                ${{ number_format($det->subtotal, 2) }}
-                                            </td>
-                                            <td>
-                                                <span class="badge {{ $det->estatus === 'activo' ? 'bg-success' : ($det->estatus === 'cancelado' ? 'bg-danger' : 'bg-warning text-dark') }}">
-                                                    {{ $det->estatus }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if($det->estatus !== 'cancelado')
-                                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#ajusteModal{{ $det->id }}" title="Cancelar / Cortesía">
-                                                    <i class="bi bi-tools"></i>
-                                                </button>
+                                @php
+                                    $todosDetalles = $nota->pedidos->flatMap->detalles;
+                                @endphp
 
-                                                <!-- Modal Ajuste -->
-                                                <div class="modal fade" id="ajusteModal{{ $det->id }}" tabindex="-1" aria-hidden="true">
-                                                    <div class="modal-dialog">
-                                                        <div class="modal-content">
-                                                            <form method="POST" action="{{ route('comandas.ajustar', $det->id) }}">
-                                                                @csrf
-                                                                <div class="modal-header">
-                                                                    <h5 class="modal-title fw-bold">Ajustar Platillo: {{ $det->platillo ? $det->platillo->nombre : '' }}</h5>
-                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                                </div>
-                                                                <div class="modal-body">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label fw-semibold">Tipo de Ajuste</label>
-                                                                        <select name="tipo" class="form-select" required>
-                                                                            <option value="cancelacion">Cancelación de platillo</option>
-                                                                            <option value="cortesia">Marcar como Cortesía (Gerencia/VIP)</option>
-                                                                            <option value="merma">Merma de cocina / Error de comanda</option>
-                                                                        </select>
-                                                                    </div>
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label fw-semibold">Cantidad a afectar</label>
-                                                                        <input type="number" name="cantidad" class="form-control" min="1" max="{{ $det->cantidad }}" value="1" required>
-                                                                    </div>
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label fw-semibold">Motivo del Ajuste *</label>
-                                                                        <input type="text" name="motivo" class="form-control" placeholder="Ej. Cambio de opinión del huésped / Plato quemado" required>
-                                                                    </div>
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label fw-semibold">Destino</label>
-                                                                        <input type="text" name="destino" class="form-control" value="cocina" required>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                                                    <button type="submit" class="btn btn-danger">Confirmar Ajuste y Auditar</button>
-                                                                </div>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                @endif
+                                @if($todosDetalles->isNotEmpty())
+                                    @php
+                                        // Extraer tiempo de servicio y agrupar platillos
+                                        $detallesProcesados = $todosDetalles->map(function($det) {
+                                            $notaTexto = trim($det->notas ?? '');
+                                            $tiempo = '1er Tiempo';
+                                            $instrucciones = $notaTexto;
+
+                                            if (preg_match('/^\[(.*?)\]\s*(.*)$/', $notaTexto, $matches)) {
+                                                $tiempo = $matches[1];
+                                                $instrucciones = $matches[2];
+                                            }
+
+                                            $det->tiempo_parsed = $tiempo;
+                                            $det->instrucciones_parsed = $instrucciones;
+                                            return $det;
+                                        });
+
+                                        // Agrupar por Tiempo de Servicio
+                                        $gruposPorTiempo = $detallesProcesados->groupBy('tiempo_parsed');
+                                    @endphp
+
+                                    @foreach($gruposPorTiempo as $tiempo => $detalles)
+                                        <!-- Encabezado de Tiempo de Servicio -->
+                                        @php
+                                            $badgeColor = match(strtolower($tiempo)) {
+                                                '1er tiempo' => 'bg-primary',
+                                                '2do tiempo' => 'bg-info text-dark',
+                                                'postre', 'postres' => 'bg-purple text-white',
+                                                'barra', 'bebidas' => 'bg-warning text-dark',
+                                                default => 'bg-dark'
+                                            };
+                                        @endphp
+                                        <tr class="table-light border-top border-bottom">
+                                            <td colspan="6" class="py-2 px-3 fw-bold bg-body-tertiary">
+                                                <span class="badge {{ $badgeColor }} px-2 py-1 me-2 fs-6">
+                                                    <i class="bi bi-clock-history me-1"></i>{{ $tiempo }}
+                                                </span>
+                                                <span class="small text-muted fw-normal">({{ $detalles->count() }} ítem(s))</span>
                                             </td>
                                         </tr>
-                                    @endforeach
-                                @endforeach
 
-                                @if(!$hasItems)
-                                <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">
-                                        No hay platillos ordenados aún en esta comanda. Utilice el selector de la derecha para agregar.
-                                    </td>
-                                </tr>
+                                        @foreach($detalles as $det)
+                                            <tr>
+                                                <td class="ps-4">
+                                                    <div class="fw-bold text-dark">{{ $det->platillo ? $det->platillo->nombre : 'Platillo' }}</div>
+                                                    @if($det->instrucciones_parsed)
+                                                        <small class="text-danger d-block mt-1">
+                                                            <i class="bi bi-chat-left-dots-fill me-1"></i>{{ $det->instrucciones_parsed }}
+                                                        </small>
+                                                    @endif
+                                                    @if($det->es_cortesia)
+                                                        <span class="badge bg-warning text-dark small mt-1">Cortesía de la Casa</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-dark fs-6">{{ $det->cantidad }}</span>
+                                                    @if($det->cantidad_cancelada > 0)
+                                                        <small class="text-danger d-block">(-{{ $det->cantidad_cancelada }})</small>
+                                                    @endif
+                                                </td>
+                                                <td>${{ number_format($det->precio_unitario, 2) }}</td>
+                                                <td class="fw-bold text-dark">${{ number_format($det->subtotal, 2) }}</td>
+                                                <td>
+                                                    <span class="badge {{ $det->estatus === 'activo' ? 'bg-success' : ($det->estatus === 'cancelado' ? 'bg-danger' : 'bg-warning text-dark') }}">
+                                                        {{ $det->estatus }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if($det->estatus !== 'cancelado')
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#ajusteModal{{ $det->id }}" title="Cancelar / Cortesía">
+                                                        <i class="bi bi-tools"></i>
+                                                    </button>
+
+                                                    <!-- Modal Ajuste -->
+                                                    <div class="modal fade" id="ajusteModal{{ $det->id }}" tabindex="-1" aria-hidden="true">
+                                                        <div class="modal-dialog">
+                                                            <div class="modal-content">
+                                                                <form method="POST" action="{{ route('comandas.ajustar', $det->id) }}">
+                                                                    @csrf
+                                                                    <div class="modal-header">
+                                                                        <h5 class="modal-title fw-bold">Ajustar Platillo: {{ $det->platillo ? $det->platillo->nombre : '' }}</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label fw-semibold">Tipo de Ajuste</label>
+                                                                            <select name="tipo" class="form-select" required>
+                                                                                <option value="cancelacion">Cancelación de platillo</option>
+                                                                                <option value="cortesia">Marcar como Cortesía (Gerencia/VIP)</option>
+                                                                                <option value="merma">Merma de cocina / Error de comanda</option>
+                                                                            </select>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label fw-semibold">Cantidad a afectar</label>
+                                                                            <input type="number" name="cantidad" class="form-control" min="1" max="{{ $det->cantidad }}" value="1" required>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label fw-semibold">Motivo del Ajuste *</label>
+                                                                            <input type="text" name="motivo" class="form-control" placeholder="Ej. Cambio de opinión del huésped / Plato quemado" required>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label fw-semibold">Destino</label>
+                                                                            <input type="text" name="destino" class="form-control" value="cocina" required>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                                                        <button type="submit" class="btn btn-danger">Confirmar Ajuste y Auditar</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            No hay platillos ordenados aún en esta comanda. Utilice el selector de la derecha para agregar.
+                                        </td>
+                                    </tr>
                                 @endif
                             </tbody>
                         </table>
@@ -261,27 +303,54 @@
                     <div class="collapse mt-3" id="ajusteCobroCollapse">
                         <form method="POST" action="{{ route('comandas.cerrar', $nota->id) }}">
                             @csrf
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <label class="form-label small">Descuento ($ MXN)</label>
-                                    <input type="number" step="0.50" name="descuento" class="form-control form-control-sm" value="{{ $nota->descuento }}">
+                            <div class="row g-3">
+                                <!-- Bloque de Descuento con Botones de Porcentaje para Auditoría -->
+                                <div class="col-md-6 contenedor-descuento" data-subtotal="{{ $nota->subtotal ?? 0 }}">
+                                    <label class="form-label small fw-semibold">Descuento Aplicado</label>
+                                    
+                                    <!-- Recuadros de Selección Rápida (%) -->
+                                    <div class="d-flex gap-2 mb-2">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="10">10%</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="20">20%</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="30">30%</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="40">40%</button>
+                                    </div>
+
+                                    <!-- Entrada Manual de Porcentaje o Monto Directo -->
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-light text-muted small">%</span>
+                                        <input type="number" class="form-control input-pct-descuento" placeholder="Ej. 17" min="0" max="100" step="1">
+                                        
+                                        <span class="input-group-text bg-light text-muted small">$ MXN</span>
+                                        <input type="number" step="any" name="descuento" class="form-control fw-bold text-danger input-monto-descuento" value="{{ $nota->descuento }}" placeholder="0.00">
+                                    </div>
+                                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Selecciona %, escribe % libre o ingresa el monto en pesos.</small>
                                 </div>
+
+                                <!-- Propina -->
                                 <div class="col-md-6">
-                                    <label class="form-label small">Propina ($ MXN)</label>
-                                    <input type="number" step="0.50" name="propina" class="form-control form-control-sm" value="{{ $nota->propina }}">
+                                    <label class="form-label small fw-semibold">Propina ($ MXN)</label>
+                                    <input type="number" step="any" name="propina" class="form-control form-control-sm" value="{{ $nota->propina }}">
                                 </div>
+
+                                <!-- Calificación del Servicio -->
                                 <div class="col-md-4">
-                                    <label class="form-label small">Calificación</label>
+                                    <label class="form-label small fw-semibold">Calificación</label>
                                     <select name="calificacion" class="form-select form-select-sm">
                                         <option value="5" {{ $nota->calificacion == 5 ? 'selected' : '' }}>⭐⭐⭐⭐⭐ Excelente (5)</option>
                                         <option value="4" {{ $nota->calificacion == 4 ? 'selected' : '' }}>⭐⭐⭐⭐ Muy Bueno (4)</option>
                                         <option value="3" {{ $nota->calificacion == 3 ? 'selected' : '' }}>⭐⭐⭐ Regular (3)</option>
+                                        <option value="2" {{ $nota->calificacion == 2 ? 'selected' : '' }}>⭐⭐ Malo (2)</option>
+                                        <option value="1" {{ $nota->calificacion == 1 ? 'selected' : '' }}>⭐ Pésimo (1)</option>
                                     </select>
                                 </div>
+
+                                <!-- Comentarios -->
                                 <div class="col-md-8">
-                                    <label class="form-label small">Comentarios</label>
+                                    <label class="form-label small fw-semibold">Comentarios</label>
                                     <input type="text" name="comentarios" class="form-control form-control-sm" value="{{ $nota->comentarios }}">
                                 </div>
+
                                 <div class="col-12 text-end pt-2">
                                     <button type="submit" class="btn btn-sm btn-outline-success">Actualizar Cobro</button>
                                 </div>
@@ -297,9 +366,27 @@
                 <form method="POST" action="{{ route('comandas.cerrar', $nota->id) }}">
                     @csrf
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Descuento ($ MXN)</label>
-                            <input type="number" step="0.50" name="descuento" class="form-control" value="{{ $nota->descuento }}">
+                        <div class="col-md-6 contenedor-descuento">
+                            <label class="form-label fw-semibold">Descuento Aplicado</label>
+                            
+                            <!-- Recuadros de Selección Rápida (%) -->
+                            <div class="d-flex gap-2 mb-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="10">10%</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="20">20%</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="30">30%</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="40">40%</button>
+                            </div>
+
+                            <!-- Entrada Manual de Porcentaje o Monto Directo -->
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted small">%</span>
+                                <input type="number" class="form-control input-pct-descuento" placeholder="Ej. 17" min="0" max="100" step="1">
+                                
+                                <span class="input-group-text bg-light text-muted small">$ MXN</span>
+                                <!-- Se cambia step="0.50" a step="any" -->
+                                <input type="number" step="any" name="descuento" class="form-control fw-bold text-danger input-monto-descuento" value="{{ $nota->descuento }}" placeholder="0.00">
+                            </div>
+                            <small class="text-muted d-block mt-1">Selecciona un porsentaje</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Propina Sugerida ($ MXN)</label>
@@ -308,9 +395,11 @@
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Calificación del Servicio</label>
                             <select name="calificacion" class="form-select">
-                                <option value="5" selected>⭐⭐⭐⭐⭐ Excelente (5)</option>
-                                <option value="4">⭐⭐⭐⭐ Muy Bueno (4)</option>
-                                <option value="3">⭐⭐⭐ Regular (3)</option>
+                                <option value="5" {{ (isset($nota) && $nota->calificacion == 5) || !isset($nota) ? 'selected' : '' }}>⭐⭐⭐⭐⭐ Excelente (5)</option>
+                                <option value="4" {{ isset($nota) && $nota->calificacion == 4 ? 'selected' : '' }}>⭐⭐⭐⭐ Muy Bueno (4)</option>
+                                <option value="3" {{ isset($nota) && $nota->calificacion == 3 ? 'selected' : '' }}>⭐⭐⭐ Regular (3)</option>
+                                <option value="2" {{ isset($nota) && $nota->calificacion == 2 ? 'selected' : '' }}>⭐⭐ Malo (2)</option>
+                                <option value="1" {{ isset($nota) && $nota->calificacion == 1 ? 'selected' : '' }}>⭐ Pésimo (1)</option>
                             </select>
                         </div>
                         <div class="col-md-8">
@@ -348,7 +437,7 @@
                     <form method="POST" action="{{ route('comandas.agregar', $firstPedido->id) }}">
                         @csrf
                         
-                        <!-- Campo de Búsqueda Rápida y Seleccionador -->
+                        <!-- Buscador Rápido y Seleccionador de Platillo -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Seleccionar Platillo *</label>
                             <div class="input-group mb-2">
@@ -361,13 +450,14 @@
                             <select name="platillo_id" id="selectPlatillo" class="form-select form-select-lg" required>
                                 <option value="" disabled selected hidden>Selecciona del menú...</option>
                                 @foreach($platillosDisponibles as $plat)
-                                    <<option value="{{ $plat->id }}">
+                                    <option value="{{ $plat->id }}">
                                         [{{ $plat->categoria ? $plat->categoria->nombre : 'General' }}] {{ $plat->nombre }} — ${{ number_format($plat->precio, 2) }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
+                        <!-- Cantidad y Cortesía -->
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <label class="form-label fw-semibold">Cantidad *</label>
@@ -381,6 +471,25 @@
                             </div>
                         </div>
 
+                        <!-- Botones de Tiempo de Servicio (NUEVO) -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold d-block">Tiempo de Servicio / Marcha *</label>
+                            <div class="btn-group w-100" role="group" aria-label="Tiempos de servicio">
+                                <input type="radio" class="btn-check" name="tiempo_servicio" id="t1" value="1er Tiempo" checked>
+                                <label class="btn btn-outline-secondary btn-sm" for="t1">1er Tiempo</label>
+
+                                <input type="radio" class="btn-check" name="tiempo_servicio" id="t2" value="2do Tiempo">
+                                <label class="btn btn-outline-secondary btn-sm" for="t2">2do Tiempo</label>
+
+                                <input type="radio" class="btn-check" name="tiempo_servicio" id="t3" value="Postre">
+                                <label class="btn btn-outline-secondary btn-sm" for="t3">Postre</label>
+
+                                <input type="radio" class="btn-check" name="tiempo_servicio" id="t4" value="Barra">
+                                <label class="btn btn-outline-secondary btn-sm" for="t4">Barra</label>
+                            </div>
+                        </div>
+
+                        <!-- Instrucciones Especiales -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Instrucciones Especiales para Cocina</label>
                             <input type="text" name="notas" class="form-control" placeholder="Ej. Sin cebolla, término medio, aderezo aparte...">
@@ -453,14 +562,14 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Modal de comanda cerrada
-    var modalEl = document.getElementById('modalCuentaCerrada');
+    // 1. Mostrar modal de celebración/cierre si existe en la sesión
+    const modalEl = document.getElementById('modalCuentaCerrada');
     if (modalEl) {
-        var myModal = new bootstrap.Modal(modalEl);
+        const myModal = new bootstrap.Modal(modalEl);
         myModal.show();
     }
 
-    // Buscador en tiempo real de platillos
+    // 2. Buscador en tiempo real de platillos en el menú
     const inputBuscar = document.getElementById('buscarPlatillo');
     const selectPlatillo = document.getElementById('selectPlatillo');
 
@@ -470,23 +579,22 @@ document.addEventListener('DOMContentLoaded', function () {
         inputBuscar.addEventListener('input', function () {
             const busqueda = this.value.toLowerCase().trim();
 
-            // Limpiar selector manteniendo la opción por defecto
             selectPlatillo.innerHTML = '';
             
             opcionesOriginales.forEach(function (opcion) {
-                // Conservar siempre la opción "Selecciona del menú..."
+                // Mantener siempre el placeholder inicial
                 if (opcion.value === '') {
                     selectPlatillo.appendChild(opcion);
                     return;
                 }
 
-                // Filtrar por coincidencias en el texto (Nombre, Categoría, Precio)
+                // Filtrar por nombre, categoría o precio
                 if (opcion.text.toLowerCase().includes(busqueda)) {
                     selectPlatillo.appendChild(opcion);
                 }
             });
 
-            // Seleccionar automáticamente la primera opción filtrada si hay coincidencias
+            // Seleccionar automáticamente la primera opción filtrada
             if (busqueda !== '' && selectPlatillo.options.length > 1) {
                 selectPlatillo.selectedIndex = 1;
             } else {
@@ -494,6 +602,79 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // 3. Calculadora y botones rápidos de porcentaje de descuento
+    document.querySelectorAll('.contenedor-descuento').forEach(function (contenedor) {
+        const subtotal = parseFloat(contenedor.dataset.subtotal || 0);
+        const inputPct = contenedor.querySelector('.input-pct-descuento');
+        const inputMonto = contenedor.querySelector('.input-monto-descuento');
+        const botonesPct = contenedor.querySelectorAll('.btn-descuento-pct');
+
+        // Inicializar porcentaje si ya existe un monto en el campo
+        if (subtotal > 0 && inputMonto && parseFloat(inputMonto.value) > 0) {
+            const pctInicial = Math.round((parseFloat(inputMonto.value) / subtotal) * 100);
+            if (inputPct) inputPct.value = pctInicial;
+
+            botonesPct.forEach(b => {
+                if (parseInt(b.getAttribute('data-pct')) === pctInicial) {
+                    b.classList.replace('btn-outline-secondary', 'btn-primary');
+                }
+            });
+        }
+
+        // Clics en botones rápidos (10%, 20%, 30%, 40%)
+        botonesPct.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const pct = parseFloat(this.getAttribute('data-pct'));
+
+                botonesPct.forEach(b => b.classList.replace('btn-primary', 'btn-outline-secondary'));
+                this.classList.replace('btn-outline-secondary', 'btn-primary');
+
+                if (inputPct) inputPct.value = pct;
+                if (inputMonto) {
+                    inputMonto.value = (subtotal * (pct / 100)).toFixed(2);
+                }
+            });
+        });
+
+        // Ingreso manual de porcentaje libre (ej. 17%)
+        if (inputPct) {
+            inputPct.addEventListener('input', function () {
+                const pct = parseFloat(this.value) || 0;
+
+                botonesPct.forEach(b => {
+                    if (parseInt(b.getAttribute('data-pct')) === pct) {
+                        b.classList.replace('btn-outline-secondary', 'btn-primary');
+                    } else {
+                        b.classList.replace('btn-primary', 'btn-outline-secondary');
+                    }
+                });
+
+                if (inputMonto) {
+                    inputMonto.value = (subtotal * (pct / 100)).toFixed(2);
+                }
+            });
+        }
+
+        // Edición directa del monto en pesos ($ MXN)
+        if (inputMonto) {
+            inputMonto.addEventListener('input', function () {
+                const monto = parseFloat(this.value) || 0;
+                const pctCalculado = subtotal > 0 ? Math.round((monto / subtotal) * 100) : 0;
+
+                if (inputPct) inputPct.value = pctCalculado;
+
+                botonesPct.forEach(b => {
+                    if (parseInt(b.getAttribute('data-pct')) === pctCalculado) {
+                        b.classList.replace('btn-outline-secondary', 'btn-primary');
+                    } else {
+                        b.classList.replace('btn-primary', 'btn-outline-secondary');
+                    }
+                });
+            });
+        }
+    });
 });
 </script>
 @endpush

@@ -128,6 +128,7 @@ class ComandaController extends Controller
         $request->validate([
             'platillo_id' => 'required|exists:platillo,id',
             'cantidad' => 'required|integer|min:1|max:20',
+            'tiempo_servicio' => 'nullable|string|max:50',
             'es_cortesia' => 'nullable|boolean',
             'notas' => 'nullable|string|max:250',
         ]);
@@ -135,19 +136,39 @@ class ComandaController extends Controller
         $pedido = Pedido::findOrFail($pedidoId);
         $platillo = Platillo::findOrFail($request->platillo_id);
 
-        PedidoDetalle::create([
-            'pedido_id' => $pedido->id,
-            'platillo_id' => $platillo->id,
-            'cantidad' => $request->cantidad,
-            'cantidad_cancelada' => 0,
-            'precio_unitario' => $platillo->precio,
-            'es_cortesia' => $request->has('es_cortesia'),
-            'notas' => $request->notas,
-        ]);
+        // Formatear nota con tiempo de servicio (ej: "[1er Tiempo] Sin cebolla")
+        $tiempo = $request->input('tiempo_servicio', '1er Tiempo');
+        $notasTexto = trim($request->input('notas', ''));
+        $notaFinal = '[' . $tiempo . ']' . ($notasTexto !== '' ? ' ' . $notasTexto : '');
+        $esCortesia = $request->has('es_cortesia');
+
+        // Buscar si ya existe el mismo platillo con el mismo tiempo, notas y estado de cortesía
+        $detalleExistente = PedidoDetalle::where('pedido_id', $pedido->id)
+            ->where('platillo_id', $platillo->id)
+            ->where('es_cortesia', $esCortesia)
+            ->where('notas', $notaFinal)
+            ->first();
+
+        if ($detalleExistente) {
+            // Si ya existe exactamente igual, acumular la cantidad
+            $detalleExistente->cantidad += $request->cantidad;
+            $detalleExistente->save();
+        } else {
+            // Si no existe o difiere en instrucciones/cortesía, crear nuevo renglón
+            PedidoDetalle::create([
+                'pedido_id' => $pedido->id,
+                'platillo_id' => $platillo->id,
+                'cantidad' => $request->cantidad,
+                'cantidad_cancelada' => 0,
+                'precio_unitario' => $platillo->precio,
+                'es_cortesia' => $esCortesia,
+                'notas' => $notaFinal,
+            ]);
+        }
 
         $this->recalcularTotales($pedido->nota_reservacion_id);
 
-        return back()->with('success', "Se agregó {$request->cantidad}x {$platillo->nombre} a la comanda.");
+        return back()->with('success', "Se agregó {$request->cantidad}x {$platillo->nombre} ({$tiempo}) a la comanda.");
     }
 
     public function ajustarPlatillo(Request $request, $detalleId)
@@ -203,19 +224,25 @@ class ComandaController extends Controller
         return DB::transaction(function () use ($request, $notaId) {
             $nota = NotaReservacion::with('pedidos.detalles', 'reservacion.cliente')->findOrFail($notaId);
 
+            // Calcular subtotal únicamente de platillos activos y que no sean cortesía
             $subtotal = 0;
             foreach ($nota->pedidos as $ped) {
                 foreach ($ped->detalles as $det) {
-                    $subtotal += $det->subtotal;
+                    if ($det->estatus === 'activo' && !$det->es_cortesia) {
+                        $cantEfectiva = max(0, $det->cantidad - $det->cantidad_cancelada);
+                        $subtotal += ($cantEfectiva * $det->precio_unitario);
+                    }
                 }
             }
 
+            // Obtener el descuento procesado
             $descuento = (float) ($request->descuento ?? 0);
             $base = max(0, $subtotal - $descuento);
             $impuestos = round($base * 0.16, 2);
             $propina = (float) ($request->propina ?? 0);
             $total = $base + $impuestos + $propina;
 
+            // Guardar valores recalculados
             $nota->update([
                 'subtotal' => $subtotal,
                 'descuento' => $descuento,
@@ -226,25 +253,24 @@ class ComandaController extends Controller
                 'comentarios' => $request->comentarios,
             ]);
 
-            // Cerrar los pedidos
+            // Cerrar los pedidos de la comanda
             foreach ($nota->pedidos as $ped) {
                 $ped->estatus = 'cerrado';
                 $ped->save();
             }
 
-            // Si hay reservación asociada, marcar como finalizada
             if ($nota->reservacion) {
                 $nota->reservacion->estatus = 'finalizada';
                 $nota->reservacion->save();
             }
 
+            // Lógica de puntos VIP...
             $puntosGanados = 0;
             $saldoTotal = 0;
             $clienteNombre = null;
             $clienteId = null;
             $nivelNombre = null;
 
-            // Si hay reservación y cliente, abonar puntos de lealtad
             if ($nota->reservacion && $nota->reservacion->cliente) {
                 $cliente = $nota->reservacion->cliente;
                 $clienteNombre = $cliente->nombre_completo;
