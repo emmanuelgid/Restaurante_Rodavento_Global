@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('content')
@@ -12,8 +11,6 @@
             --muted: rgba(255,255,255,.55);
             --border: rgba(255,255,255,.11);
         }
-
-        /* CONTENEDOR */
 
         .register-wrapper {
             min-height: calc(100vh - 70px);
@@ -30,8 +27,6 @@
                 var(--bg-primary);
         }
 
-        /* TARJETA */
-
         .register-card {
             width: 100%;
             max-width: 850px;
@@ -44,8 +39,6 @@
             box-shadow: 0 25px 70px rgba(0,0,0,.35);
             animation: cardAppear .8s ease both;
         }
-
-        /* PANEL INSTITUCIONAL */
 
         .register-brand {
             padding: 45px 35px;
@@ -111,10 +104,8 @@
             margin-top: 45px;
         }
 
-        /* PANEL DEL FORMULARIO */
-
         .register-form-panel {
-            padding: 45px 45px;
+            padding: 40px 45px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -126,42 +117,40 @@
             letter-spacing: 2.5px;
             text-transform: uppercase;
             font-weight: 600;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .form-title {
             font-family: 'Playfair Display', serif;
             color: var(--white);
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 500;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
 
         .form-description {
             color: var(--muted);
-            font-size: .76rem;
-            line-height: 1.8;
-            margin-bottom: 30px;
+            font-size: .74rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
         }
 
-        /* CAMPOS */
-
         .register-field {
-            margin-bottom: 19px;
+            margin-bottom: 14px;
         }
 
         .register-label {
             display: block;
             color: rgba(255,255,255,.75);
-            font-size: .72rem;
+            font-size: .70rem;
             font-weight: 500;
-            margin-bottom: 9px;
+            margin-bottom: 6px;
             letter-spacing: .3px;
         }
 
         .register-label i {
             color: var(--accent-gold);
-            margin-right: 7px;
+            margin-right: 6px;
         }
 
         .register-input-wrapper {
@@ -170,15 +159,15 @@
 
         .register-input {
             width: 100%;
-            height: 48px;
-            padding: 0 15px;
+            height: 42px;
+            padding: 0 14px;
             border-radius: 4px;
             border: 1px solid rgba(255,255,255,.13);
             outline: none;
             background: rgba(255,255,255,.035);
             color: var(--white);
             font-family: 'Inter', sans-serif;
-            font-size: .77rem;
+            font-size: .75rem;
             transition: all .3s ease;
         }
 
@@ -212,11 +201,9 @@
         .register-error {
             display: block;
             color: #e59a9a;
-            font-size: .68rem;
-            margin-top: 7px;
+            font-size: .66rem;
+            margin-top: 5px;
         }
-
-        /* BOTÓN MOSTRAR CONTRASEÑA */
 
         .password-toggle {
             position: absolute;
@@ -228,24 +215,22 @@
             color: rgba(255,255,255,.5);
             cursor: pointer;
             padding: 5px;
-            font-size: .95rem;
+            font-size: .9rem;
         }
 
         .password-toggle:hover {
             color: var(--accent-gold);
         }
 
-        /* BOTÓN DE REGISTRO */
-
         .btn-register {
             width: 100%;
-            height: 51px;
-            margin-top: 9px;
+            height: 46px;
+            margin-top: 6px;
             border: 1px solid var(--accent-gold);
             border-radius: 4px;
             background: var(--accent-gold);
             color: var(--bg-primary);
-            font-size: .76rem;
+            font-size: .74rem;
             font-weight: 700;
             letter-spacing: .8px;
             text-transform: uppercase;
@@ -263,14 +248,12 @@
             margin-left: 8px;
         }
 
-        /* ENLACE DE REGRESO */
-
         .register-back {
             text-align: center;
-            margin-top: 25px;
-            padding-top: 20px;
+            margin-top: 18px;
+            padding-top: 15px;
             border-top: 1px solid var(--border);
-            font-size: .72rem;
+            font-size: .70rem;
             color: var(--muted);
         }
 
@@ -286,19 +269,15 @@
             color: #f1d77e;
         }
 
-        /* ALERTAS */
-
         .register-alert {
-            padding: 11px 13px;
-            margin-bottom: 20px;
+            padding: 10px 12px;
+            margin-bottom: 15px;
             border: 1px solid rgba(220,119,119,.4);
             border-radius: 4px;
             color: #e9a0a0;
             background: rgba(220,119,119,.07);
-            font-size: .72rem;
+            font-size: .70rem;
         }
-
-        /* ANIMACIÓN */
 
         @keyframes cardAppear {
             from {
@@ -311,65 +290,41 @@
             }
         }
 
-        /* RESPONSIVE */
-
         @media(max-width: 700px) {
             .register-card {
                 grid-template-columns: 1fr;
                 max-width: 480px;
             }
-
             .register-brand {
                 padding: 30px;
                 border-right: none;
                 border-bottom: 1px solid var(--border);
             }
-
             .register-brand h1 {
                 font-size: 2.1rem;
             }
-
-            .register-brand-footer {
-                margin-top: 25px;
-            }
-
             .register-form-panel {
-                padding: 35px 30px;
-            }
-        }
-
-        @media(max-width: 380px) {
-            .register-form-panel,
-            .register-brand {
-                padding: 25px 20px;
+                padding: 30px 25px;
             }
         }
     </style>
 
-
     <div class="register-wrapper">
-
         <div class="register-card">
 
             <!-- IDENTIDAD DEL HOTEL -->
-
             <div class="register-brand">
-
                 <div>
                     <div class="register-symbol">
                         <i class="bi bi-buildings"></i>
                     </div>
-
                     <div class="register-overline">
-                        Portal institucional
+                        Portal Operativo
                     </div>
-
                     <h1>
                         HOTEL<br>RODAVENTO
                     </h1>
-
                     <div class="register-line"></div>
-
                     <p class="register-brand-description">
                         Forme parte de nuestro equipo.
                         Registre sus datos para obtener acceso
@@ -377,229 +332,147 @@
                         de Hotel Rodavento.
                     </p>
                 </div>
-
                 <div class="register-brand-footer">
                     Excelencia en cada detalle
                 </div>
-
             </div>
 
-
             <!-- FORMULARIO -->
-
             <div class="register-form-panel">
-
                 <div class="form-overline">
                     Gestión de personal
                 </div>
-
                 <h2 class="form-title">
                     Registrar empleado
                 </h2>
-
                 <p class="form-description">
-                    Complete los siguientes campos para crear
-                    una nueva cuenta en el sistema.
+                    Complete los siguientes campos para crear una nueva cuenta.
                 </p>
-
 
                 <form method="POST" action="{{ route('register') }}">
                     @csrf
 
-                    <!-- NOMBRE -->
-
+                    <!-- NOMBRE(S) -->
                     <div class="register-field">
-
-                        <label for="name" class="register-label">
-                            <i class="bi bi-person"></i>
-                            Nombre completo
+                        <label for="nombres" class="register-label">
+                            <i class="bi bi-person"></i> Nombre(s)
                         </label>
-
-                        <input
-                            id="name"
-                            type="text"
-                            class="register-input @error('name') is-invalid @enderror"
-                            name="name"
-                            value="{{ old('name') }}"
-                            placeholder="Ingrese el nombre completo"
-                            required
-                            autocomplete="name"
-                            autofocus
-                        >
-
-                        @error('name')
-                        <span class="register-error">
-                            {{ $message }}
-                        </span>
+                        <input id="nombres" type="text" class="register-input @error('nombres') is-invalid @enderror" name="nombres" value="{{ old('nombres') }}" placeholder="Ej. Emiliano" required autocomplete="given-name" autofocus>
+                        @error('nombres')
+                        <span class="register-error">{{ $message }}</span>
                         @enderror
-
                     </div>
 
+                    <!-- APELLIDOS -->
+                    <div class="register-field">
+                        <label for="apellidos" class="register-label">
+                            <i class="bi bi-person-badge"></i> Apellidos
+                        </label>
+                        <input id="apellidos" type="text" class="register-input @error('apellidos') is-invalid @enderror" name="apellidos" value="{{ old('apellidos') }}" placeholder="Ej. Hernández" required autocomplete="family-name">
+                        @error('apellidos')
+                        <span class="register-error">{{ $message }}</span>
+                        @enderror
+                    </div>
 
                     <!-- CORREO -->
-
                     <div class="register-field">
-
                         <label for="email" class="register-label">
-                            <i class="bi bi-envelope"></i>
-                            Correo electrónico
+                            <i class="bi bi-envelope"></i> Correo electrónico
                         </label>
-
-                        <input
-                            id="email"
-                            type="email"
-                            class="register-input @error('email') is-invalid @enderror"
-                            name="email"
-                            value="{{ old('email') }}"
-                            placeholder="ejemplo@correo.com"
-                            required
-                            autocomplete="email"
-                        >
-
+                        <input id="email" type="email" class="register-input @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" placeholder="ejemplo@correo.com" required autocomplete="email">
                         @error('email')
-                        <span class="register-error">
-                            {{ $message }}
-                        </span>
+                        <span class="register-error">{{ $message }}</span>
                         @enderror
-
                     </div>
 
+                    <!-- TELÉFONO -->
+                    <div class="register-field">
+                        <label for="telefono" class="register-label">
+                            <i class="bi bi-telephone"></i> Teléfono de contacto
+                        </label>
+                        <input id="telefono" type="text" class="register-input @error('telefono') is-invalid @enderror" name="telefono" value="{{ old('telefono') }}" placeholder="7221234567" required>
+                        @error('telefono')
+                        <span class="register-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <!-- SUCURSAL -->
+                    <div class="register-field">
+                        <label for="sucursal_id" class="register-label">
+                            <i class="bi bi-geo-alt"></i> Sucursal asignada
+                        </label>
+                        <select id="sucursal_id" name="sucursal_id" class="register-input @error('sucursal_id') is-invalid @enderror" required>
+                            <option value="" disabled selected>Seleccione una sucursal...</option>
+                            @foreach(\App\Models\Sucursal::all() as $sucursal)
+                                <option value="{{ $sucursal->id }}" {{ old('sucursal_id') == $sucursal->id ? 'selected' : '' }}>
+                                    {{ $sucursal->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('sucursal_id')
+                        <span class="register-error">{{ $message }}</span>
+                        @enderror
+                    </div>
 
                     <!-- CONTRASEÑA -->
-
                     <div class="register-field">
-
                         <label for="password" class="register-label">
-                            <i class="bi bi-lock"></i>
-                            Contraseña
+                            <i class="bi bi-lock"></i> Contraseña
                         </label>
-
                         <div class="register-input-wrapper">
-
-                            <input
-                                id="password"
-                                type="password"
-                                class="register-input @error('password') is-invalid @enderror"
-                                name="password"
-                                placeholder="Ingrese una contraseña"
-                                required
-                                autocomplete="new-password"
-                            >
-
-                            <button
-                                type="button"
-                                class="password-toggle"
-                                onclick="togglePassword('password', this)"
-                                aria-label="Mostrar contraseña"
-                            >
+                            <input id="password" type="password" class="register-input @error('password') is-invalid @enderror" name="password" placeholder="Ingrese una contraseña" required autocomplete="new-password">
+                            <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Mostrar contraseña">
                                 <i class="bi bi-eye"></i>
                             </button>
-
                         </div>
-
                         @error('password')
-                        <span class="register-error">
-                            {{ $message }}
-                        </span>
+                        <span class="register-error">{{ $message }}</span>
                         @enderror
-
                     </div>
-
 
                     <!-- CONFIRMAR CONTRASEÑA -->
-
                     <div class="register-field">
-
                         <label for="password-confirm" class="register-label">
-                            <i class="bi bi-shield-lock"></i>
-                            Confirmar contraseña
+                            <i class="bi bi-shield-lock"></i> Confirmar contraseña
                         </label>
-
                         <div class="register-input-wrapper">
-
-                            <input
-                                id="password-confirm"
-                                type="password"
-                                class="register-input"
-                                name="password_confirmation"
-                                placeholder="Repita la contraseña"
-                                required
-                                autocomplete="new-password"
-                            >
-
-                            <button
-                                type="button"
-                                class="password-toggle"
-                                onclick="togglePassword('password-confirm', this)"
-                                aria-label="Mostrar contraseña"
-                            >
+                            <input id="password-confirm" type="password" class="register-input" name="password_confirmation" placeholder="Repita la contraseña" required autocomplete="new-password">
+                            <button type="button" class="password-toggle" onclick="togglePassword('password-confirm', this)" aria-label="Mostrar contraseña">
                                 <i class="bi bi-eye"></i>
                             </button>
-
                         </div>
-
                     </div>
 
-
-                    <!-- ERRORES GENERALES -->
-
-                    @if ($errors->any() && !$errors->has('name') && !$errors->has('email') && !$errors->has('password'))
-                        <div class="register-alert">
-                            <i class="bi bi-exclamation-circle me-2"></i>
-                            No fue posible completar el registro.
-                            Revise la información proporcionada.
-                        </div>
-                    @endif
-
-
                     <!-- BOTÓN -->
-
                     <button type="submit" class="btn-register">
-                        Crear cuenta
-                        <i class="bi bi-arrow-right"></i>
+                        Crear cuenta <i class="bi bi-arrow-right"></i>
                     </button>
-
                 </form>
 
-
                 <!-- REGRESAR AL LOGIN -->
-
                 <div class="register-back">
                     ¿Ya tiene una cuenta?
-
                     <a href="{{ route('login') }}">
-                        Iniciar sesión
-                        <i class="bi bi-arrow-up-right"></i>
+                        Iniciar sesión <i class="bi bi-arrow-up-right"></i>
                     </a>
                 </div>
-
             </div>
 
         </div>
-
     </div>
-
-
-    <!-- MOSTRAR / OCULTAR CONTRASEÑA -->
 
     <script>
         function togglePassword(inputId, button) {
-
             const input = document.getElementById(inputId);
             const icon = button.querySelector('i');
-
             if (input.type === 'password') {
-
                 input.type = 'text';
                 icon.className = 'bi bi-eye-slash';
                 button.setAttribute('aria-label', 'Ocultar contraseña');
-
             } else {
-
                 input.type = 'password';
                 icon.className = 'bi bi-eye';
                 button.setAttribute('aria-label', 'Mostrar contraseña');
-
             }
         }
     </script>
