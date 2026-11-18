@@ -29,7 +29,8 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('platillos.store') }}" id="form_platillo">
+                <!-- Se agrega enctype="multipart/form-data" para permitir subida de archivos -->
+                <form method="POST" action="{{ route('platillos.store') }}" id="form_platillo" enctype="multipart/form-data">
                     @csrf
                     <div class="row g-3">
                         <!-- Nombre del Platillo -->
@@ -135,10 +136,11 @@
                             <textarea name="descripcion" rows="3" class="form-control" placeholder="Describe los ingredientes principales, métodos de cocción y maridaje sugerido...">{{ old('descripcion') }}</textarea>
                         </div>
 
-                        <!-- URL Fotografía -->
+                        <!-- Subir Archivo de Imagen -->
                         <div class="col-12">
-                            <label class="form-label fw-semibold">URL de Fotografía</label>
-                            <input type="url" name="imagen_url" class="form-control" placeholder="https://images.unsplash.com/..." value="{{ old('imagen_url') }}">
+                            <label class="form-label fw-semibold"><i class="bi bi-image me-1"></i> Fotografía del Platillo (Imagen)</label>
+                            <input type="file" name="imagen" class="form-control" accept="image/png, image/jpeg, image/jpg, image/webp">
+                            <small class="text-muted">Selecciona una imagen desde tu equipo (JPG, PNG, WEBP — Máx. 2MB).</small>
                         </div>
 
                         <!-- Sección de Ingredientes: Existentes + Múltiples Nuevos -->

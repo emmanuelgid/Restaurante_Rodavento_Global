@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\{Platillo, CategoriaPlatillo, Temporada, Ingrediente, Alergia, Sucursal, PlatilloSucursal, Bitacora};
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class PlatilloController extends Controller
@@ -17,7 +18,10 @@ class PlatilloController extends Controller
 
     public function index(Request $request)
     {
-        $query = Platillo::with(['categoria', 'temporada', 'alergenos', 'ingredientes']);
+        // Solo platillos con estatus activo Y marcados como disponibles en carta
+        $query = Platillo::with(['categoria', 'temporada', 'alergenos', 'ingredientes'])
+            ->where('estatus', 'activo')
+            ->where('disponible', true);
 
         if ($request->filled('categoria_id')) {
             $query->where('categoria_id', $request->categoria_id);
@@ -27,7 +31,7 @@ class PlatilloController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nombre', 'ILIKE', "%{$search}%")
-                  ->orWhere('descripcion', 'ILIKE', "%{$search}%");
+                ->orWhere('descripcion', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -60,7 +64,7 @@ class PlatilloController extends Controller
             'temporada_id' => 'nullable',
             'precio' => 'required|numeric|min:0',
             'descripcion' => 'nullable|string',
-            'imagen_url' => 'nullable|url|max:500',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ];
 
         if ($request->categoria_id === 'nueva') {
@@ -111,19 +115,26 @@ class PlatilloController extends Controller
                 }
             }
 
-            // 3. Crear Platillo
+            // 3. Procesar archivo de imagen subido
+            $imagenUrl = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+            if ($request->hasFile('imagen')) {
+                $path = $request->file('imagen')->store('platillos', 'public');
+                $imagenUrl = asset('storage/' . $path);
+            }
+
+            // 4. Crear Platillo
             $platillo = Platillo::create([
                 'nombre' => $request->nombre,
                 'categoria_id' => $categoriaId,
                 'temporada_id' => $temporadaId,
                 'precio' => $request->precio,
                 'descripcion' => $request->descripcion,
-                'imagen_url' => $request->imagen_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+                'imagen_url' => $imagenUrl,
                 'estatus' => 'activo',
                 'disponible' => true,
             ]);
 
-            // 4. Manejo de múltiples ingredientes (existentes + dinámicos nuevos)
+            // 5. Manejo de múltiples ingredientes (existentes + dinámicos nuevos)
             $ingredientesIds = [];
             if ($request->filled('ingredientes') && is_array($request->ingredientes)) {
                 $ingredientesIds = array_map('intval', $request->ingredientes);
@@ -163,12 +174,12 @@ class PlatilloController extends Controller
                 $platillo->ingredientes()->sync($ingredientesIds);
             }
 
-            // 5. Alérgenos asociados
+            // 6. Alérgenos asociados
             if ($request->filled('alergias')) {
                 $platillo->alergenos()->sync($request->alergias);
             }
 
-            // 6. Habilitar en todas las sucursales activas
+            // 7. Habilitar en todas las sucursales activas
             $sucursales = Sucursal::where('activa', true)->get();
             foreach ($sucursales as $suc) {
                 PlatilloSucursal::updateOrCreate([
@@ -180,7 +191,7 @@ class PlatilloController extends Controller
                 ]);
             }
 
-            // 7. Registro en Bitácora de auditoría
+            // 8. Registro en Bitácora de auditoría
             Bitacora::create([
                 'usuario_id' => Auth::id(),
                 'accion' => 'CREAR_PLAT',
@@ -211,7 +222,7 @@ class PlatilloController extends Controller
             'temporada_id' => 'nullable',
             'precio' => 'required|numeric|min:0',
             'descripcion' => 'nullable|string',
-            'imagen_url' => 'nullable|url|max:500',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'disponible' => 'boolean',
         ];
 
@@ -263,17 +274,24 @@ class PlatilloController extends Controller
                 }
             }
 
+            // 3. Procesar nueva imagen si se subió una
+            $imagenUrl = $platillo->imagen_url;
+            if ($request->hasFile('imagen')) {
+                $path = $request->file('imagen')->store('platillos', 'public');
+                $imagenUrl = asset('storage/' . $path);
+            }
+
             $platillo->update([
                 'nombre' => $request->nombre,
                 'categoria_id' => $categoriaId,
                 'temporada_id' => $temporadaId,
                 'precio' => $request->precio,
                 'descripcion' => $request->descripcion,
-                'imagen_url' => $request->imagen_url ?? $platillo->imagen_url,
+                'imagen_url' => $imagenUrl,
                 'disponible' => $request->has('disponible'),
             ]);
 
-            // 3. Resolver Ingredientes
+            // 4. Resolver Ingredientes
             $ingredientesIds = [];
             if ($request->filled('ingredientes') && is_array($request->ingredientes)) {
                 $ingredientesIds = array_map('intval', $request->ingredientes);
