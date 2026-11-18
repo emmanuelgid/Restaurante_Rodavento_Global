@@ -129,11 +129,26 @@
                                             <tr>
                                                 <td class="ps-4">
                                                     <div class="fw-bold text-dark">{{ $det->platillo ? $det->platillo->nombre : 'Platillo' }}</div>
+
+                                                    <!-- Motivo de Cancelación / Ajuste -->
+                                                    @php
+                                                        $ajusteCancelacion = $det->ajustes ? $det->ajustes->whereIn('tipo', ['cancelacion', 'merma'])->last() : null;
+                                                    @endphp
+
+                                                    @if(($det->estatus === 'cancelado' || $det->cantidad_cancelada > 0) && $ajusteCancelacion)
+                                                        <small class="text-danger fw-semibold d-block mt-1">
+                                                            <i class="bi bi-x-circle-fill me-1"></i>Motivo cancelación: {{ $ajusteCancelacion->motivo }}
+                                                        </small>
+                                                    @endif
+
+                                                    <!-- Instrucciones de cocina -->
                                                     @if($det->instrucciones_parsed)
                                                         <small class="text-danger d-block mt-1">
                                                             <i class="bi bi-chat-left-dots-fill me-1"></i>{{ $det->instrucciones_parsed }}
                                                         </small>
                                                     @endif
+
+                                                    <!-- Cortesía -->
                                                     @if($det->es_cortesia)
                                                         <span class="badge bg-warning text-dark small mt-1">Cortesía de la Casa</span>
                                                     @endif
@@ -386,7 +401,7 @@
                                 <!-- Se cambia step="0.50" a step="any" -->
                                 <input type="number" step="any" name="descuento" class="form-control fw-bold text-danger input-monto-descuento" value="{{ $nota->descuento }}" placeholder="0.00">
                             </div>
-                            <small class="text-muted d-block mt-1">Selecciona un porsentaje</small>
+                            <small class="text-muted d-block mt-1">Selecciona un porcentaje</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Propina Sugerida ($ MXN)</label>
