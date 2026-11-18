@@ -27,9 +27,14 @@ Route::middleware('auth')->group(function () {
     // o puedes protegerlo con ->middleware('can:dashboard.ver') si todos los roles tienen el permiso 1)
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-    // 2. Platillos / Carta -> Permiso: menu.admin (ID 3)
+    // 2. Platillos / Carta
+    // Lectura (Mesero, Capitán, Chef, Gerente, Admin) -> Permiso: menu.ver (ID 14)
+    Route::get('/platillos', [PlatilloController::class, 'index'])
+        ->middleware('can:menu.ver')
+        ->name('platillos.index');
+
+    // Administración (Chef, Gerente, Admin) -> Permiso: menu.admin (ID 3)
     Route::middleware('can:menu.admin')->group(function () {
-        Route::get('/platillos', [PlatilloController::class, 'index'])->name('platillos.index');
         Route::get('/platillos/crear', [PlatilloController::class, 'create'])->name('platillos.create');
         Route::post('/platillos', [PlatilloController::class, 'store'])->name('platillos.store');
         Route::get('/platillos/{platillo}/editar', [PlatilloController::class, 'edit'])->name('platillos.edit');

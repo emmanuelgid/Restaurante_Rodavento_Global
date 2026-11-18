@@ -10,9 +10,12 @@
             <p class="text-muted mb-0 small">Directorio de personal de cocina, sala, capitanes, chefs y gerencia.</p>
         </div>
         <div class="mt-3 mt-md-0">
-            <button type="button" class="btn btn-rv-gold btn-sm" data-bs-toggle="modal" data-bs-target="#empleadoModal">
-                <i class="bi bi-person-plus"></i> Registrar Colaborador
-            </button>
+            @can('empleados.admin')
+                <button type="button" class="btn btn-rv-gold btn-sm" data-bs-toggle="modal" data-bs-target="#empleadoModal">
+                    <i class="bi bi-person-plus"></i> Registrar Colaborador
+                </button>
+            @endcan
+
         </div>
     </div>
 

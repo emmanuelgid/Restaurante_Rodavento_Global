@@ -186,68 +186,81 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     @auth
                     <!-- Main Navigation Links -->
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
-                        <li class="nav-item">
-                            <a class="nav-link-custom {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
-                                <i class="bi bi-speedometer2"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link-custom {{ request()->routeIs('reservaciones.*') ? 'active' : '' }}" href="{{ route('reservaciones.index') }}">
-                                <i class="bi bi-calendar-check"></i> Reservaciones
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link-custom {{ request()->routeIs('comandas.*') ? 'active' : '' }}" href="{{ route('comandas.index') }}">
-                                <i class="bi bi-receipt"></i> Comandas & POS
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link-custom {{ request()->routeIs('platillos.*') ? 'active' : '' }}" href="{{ route('platillos.index') }}">
-                                <i class="bi bi-egg-fried"></i> Carta & Menú
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link-custom {{ request()->routeIs('clientes.*') ? 'active' : '' }}" href="{{ route('clientes.index') }}">
-                                <i class="bi bi-people"></i> Clientes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link-custom {{ request()->routeIs('lealtad.*') ? 'active' : '' }}" href="{{ route('lealtad.index') }}">
-                                <i class="bi bi-star-fill text-warning"></i> Lealtad VIP
-                            </a>
-                        </li>
-                        @canany(['sucursales.admin', 'mesas.ver', 'empleados.ver', 'auditoria.ver'])
-                            <li class="nav-item dropdown">
-                                <a class="nav-link-custom dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-gear"></i> Más Módulos
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+                            <li class="nav-item">
+                                <a class="nav-link-custom {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
+                                    <i class="bi bi-speedometer2"></i> Dashboard
                                 </a>
-                                <ul class="dropdown-menu shadow border-0">
-                                    @can('sucursales.admin')
-                                        <li><a class="dropdown-item py-2" href="{{ route('sucursales.index') }}"><i class="bi bi-buildings me-2 text-primary"></i> Sucursales</a></li>
-                                    @endcan
-
-                                    @can('mesas.ver')
-                                        <li><a class="dropdown-item py-2" href="{{ route('mesas.index') }}"><i class="bi bi-grid-3x3-gap me-2 text-success"></i> Mesas & Sala</a></li>
-                                    @endcan
-
-                                    @can('empleados.ver')
-                                        <li><a class="dropdown-item py-2" href="{{ route('empleados.index') }}"><i class="bi bi-person-badge me-2 text-info"></i> Personal & Turnos</a></li>
-                                    @endcan
-
-                                    @if(auth()->user()->canAny(['sucursales.admin', 'mesas.ver', 'empleados.ver']) && auth()->user()->can('auditoria.ver'))
-                                        <li><hr class="dropdown-divider"></li>
-                                    @endif
-
-                                    @can('auditoria.ver')
-                                        <li><a class="dropdown-item py-2" href="{{ route('bitacora.index') }}"><i class="bi bi-shield-lock me-2 text-danger"></i> Auditoría & Bitácora</a></li>
-                                    @endcan
-
-                                    <li><a class="dropdown-item py-2" href="{{ route('welcome') }}" target="_blank"><i class="bi bi-globe me-2 text-secondary"></i> Ver Sitio Web Público</a></li>
-                                </ul>
                             </li>
-                        @endcanany
-                    </ul>
+
+                            @can('reservaciones.gestionar')
+                                <li class="nav-item">
+                                    <a class="nav-link-custom {{ request()->routeIs('reservaciones.*') ? 'active' : '' }}" href="{{ route('reservaciones.index') }}">
+                                        <i class="bi bi-calendar-check"></i> Reservaciones
+                                    </a>
+                                </li>
+                            @endcan
+
+                            @can('comandas.operar')
+                                <li class="nav-item">
+                                    <a class="nav-link-custom {{ request()->routeIs('comandas.*') ? 'active' : '' }}" href="{{ route('comandas.index') }}">
+                                        <i class="bi bi-receipt"></i> Comandas & POS
+                                    </a>
+                                </li>
+                            @endcan
+
+                            @can('menu.ver')
+                                <li class="nav-item">
+                                    <a class="nav-link-custom {{ request()->routeIs('platillos.*') ? 'active' : '' }}" href="{{ route('platillos.index') }}">
+                                        <i class="bi bi-egg-fried"></i> Carta & Menú
+                                    </a>
+                                </li>
+                            @endcan
+
+                            @can('clientes.admin')
+                                <li class="nav-item">
+                                    <a class="nav-link-custom {{ request()->routeIs('clientes.*') ? 'active' : '' }}" href="{{ route('clientes.index') }}">
+                                        <i class="bi bi-people"></i> Clientes
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link-custom {{ request()->routeIs('lealtad.*') ? 'active' : '' }}" href="{{ route('lealtad.index') }}">
+                                        <i class="bi bi-star-fill text-warning"></i> Lealtad VIP
+                                    </a>
+                                </li>
+                            @endcan
+
+                            @canany(['sucursales.admin', 'mesas.ver', 'empleados.ver', 'auditoria.ver'])
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link-custom dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-gear"></i> Más Módulos
+                                    </a>
+                                    <ul class="dropdown-menu shadow border-0">
+                                        @can('sucursales.admin')
+                                            <li><a class="dropdown-item py-2" href="{{ route('sucursales.index') }}"><i class="bi bi-buildings me-2 text-primary"></i> Sucursales</a></li>
+                                        @endcan
+
+                                        @can('mesas.ver')
+                                            <li><a class="dropdown-item py-2" href="{{ route('mesas.index') }}"><i class="bi bi-grid-3x3-gap me-2 text-success"></i> Mesas & Sala</a></li>
+                                        @endcan
+
+                                        @can('empleados.ver')
+                                            <li><a class="dropdown-item py-2" href="{{ route('empleados.index') }}"><i class="bi bi-person-badge me-2 text-info"></i> Personal & Turnos</a></li>
+                                        @endcan
+
+                                        @if(auth()->user()->canAny(['sucursales.admin', 'mesas.ver', 'empleados.ver']) && auth()->user()->can('auditoria.ver'))
+                                            <li><hr class="dropdown-divider"></li>
+                                        @endif
+
+                                        @can('auditoria.ver')
+                                            <li><a class="dropdown-item py-2" href="{{ route('bitacora.index') }}"><i class="bi bi-shield-lock me-2 text-danger"></i> Auditoría & Bitácora</a></li>
+                                        @endcan
+
+                                        <li><a class="dropdown-item py-2" href="{{ route('welcome') }}" target="_blank"><i class="bi bi-globe me-2 text-secondary"></i> Ver Sitio Web Público</a></li>
+                                    </ul>
+                                </li>
+                            @endcanany
+                        </ul>
 
                     <!-- User and Branch Profile -->
                     <ul class="navbar-nav ms-auto align-items-center">

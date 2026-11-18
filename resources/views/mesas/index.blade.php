@@ -10,9 +10,11 @@
             <p class="text-muted mb-0 small">Catálogo de mesas, capacidades y vinculación con sucursales.</p>
         </div>
         <div class="mt-3 mt-md-0">
+            @can('mesas.admin')
             <button type="button" class="btn btn-rv-gold btn-sm" data-bs-toggle="modal" data-bs-target="#mesaModal">
                 <i class="bi bi-plus-circle"></i> Agregar Mesa
             </button>
+            @endcan
         </div>
     </div>
 
