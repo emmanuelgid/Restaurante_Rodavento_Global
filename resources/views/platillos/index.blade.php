@@ -49,20 +49,25 @@
         <!-- Grid de Platillos -->
         <div class="row g-4">
             @forelse($platillos as $pl)
+                {{-- Omitir platillos inactivos o cancelados --}}
+                @if(isset($pl->estatus) && $pl->estatus !== 'activo')
+                    @continue
+                @endif
+
                 <div class="col-sm-6 col-lg-4 col-xl-3">
                     <div class="card card-custom h-100 d-flex flex-column overflow-hidden">
                         <div style="height: 190px; position: relative;">
                             <img src="{{ $pl->imagen_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80' }}"
                                  class="w-100 h-100 object-fit-cover" alt="{{ $pl->nombre }}">
                             <div class="position-absolute top-0 end-0 m-2">
-                        <span class="badge {{ $pl->disponible ? 'bg-success' : 'bg-danger' }}">
-                            {{ $pl->disponible ? 'En Carta' : 'Agotado' }}
-                        </span>
+                                <span class="badge {{ $pl->disponible ? 'bg-success' : 'bg-danger' }}">
+                                    {{ $pl->disponible ? 'En Carta' : 'Agotado' }}
+                                </span>
                             </div>
                             <div class="position-absolute bottom-0 start-0 m-2">
-                        <span class="badge bg-dark bg-opacity-75 text-white">
-                            {{ $pl->categoria->nombre ?? 'General' }}
-                        </span>
+                                <span class="badge bg-dark bg-opacity-75 text-white">
+                                    {{ $pl->categoria->nombre ?? 'General' }}
+                                </span>
                             </div>
                         </div>
 
@@ -76,7 +81,7 @@
                             </p>
 
                             <!-- Alérgenos -->
-                            @if($pl->alergenos->isNotEmpty())
+                            @if($pl->alergenos && $pl->alergenos->isNotEmpty())
                                 <div class="mb-3">
                                     <small class="text-danger fw-bold d-block mb-1" style="font-size: 0.72rem;">
                                         <i class="bi bi-exclamation-triangle"></i> Alérgenos:
@@ -84,8 +89,8 @@
                                     <div class="d-flex flex-wrap gap-1">
                                         @foreach($pl->alergenos as $al)
                                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.68rem;">
-                                    {{ $al->nombre }}
-                                </span>
+                                                {{ $al->nombre }}
+                                            </span>
                                         @endforeach
                                     </div>
                                 </div>
@@ -111,7 +116,7 @@
             @empty
                 <div class="col-12 text-center py-5">
                     <i class="bi bi-egg-fried text-muted" style="font-size: 4rem;"></i>
-                    <h4 class="mt-3 text-muted">No se encontraron platillos</h4>
+                    <h4 class="mt-3 text-muted">No se encontraron platillos disponibles</h4>
                     <p class="text-muted small">Intente cambiar los filtros o agregue un nuevo platillo a la carta.</p>
                 </div>
             @endforelse

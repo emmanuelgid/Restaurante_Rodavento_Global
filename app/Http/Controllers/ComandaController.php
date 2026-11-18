@@ -173,14 +173,19 @@ class ComandaController extends Controller
 
     public function ajustarPlatillo(Request $request, $detalleId)
     {
+        $detalle = PedidoDetalle::with('pedido.nota')->findOrFail($detalleId);
+
+        // Validar si la comanda o el pedido ya están cerrados
+        if ($detalle->pedido->estatus === 'cerrado' || $detalle->pedido->nota->esta_cerrada) {
+            return back()->with('error', 'Seguridad: No se pueden realizar ajustes a platillos de una comanda liquidada.');
+        }
+
         $request->validate([
             'tipo' => 'required|in:cancelacion,merma,cortesia,cambio',
             'cantidad' => 'required|integer|min:1',
             'motivo' => 'required|string|max:250',
             'destino' => 'required|string|max:15',
         ]);
-
-        $detalle = PedidoDetalle::findOrFail($detalleId);
 
         PedidoDetalleAjuste::create([
             'pedido_detalle_id' => $detalle->id,
