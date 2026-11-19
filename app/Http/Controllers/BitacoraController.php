@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\{Bitacora, SolicitudArco};
+use App\Models\Bitacora;
 
 class BitacoraController extends Controller
 {
@@ -12,11 +12,31 @@ class BitacoraController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $bitacoras = Bitacora::with('usuario')->latest('fecha_hora')->paginate(20);
-        $solicitudesArco = SolicitudArco::with(['cliente', 'historial'])->latest('fecha_solicitud')->get();
+        $query = Bitacora::with('usuario');
 
-        return view('bitacora.index', compact('bitacoras', 'solicitudesArco'));
+        if ($request->filled('fecha_inicio')) {
+            $query->whereDate('fecha_hora', '>=', $request->fecha_inicio);
+        }
+
+        if ($request->filled('fecha_fin')) {
+            $query->whereDate('fecha_hora', '<=', $request->fecha_fin);
+        }
+
+        if ($request->filled('accion')) {
+            $query->where('accion', $request->accion);
+        }
+
+        $bitacoras = $query->orderBy('fecha_hora', 'desc')
+            ->paginate(15)
+            ->appends($request->all());
+
+        $accionesDisponibles = Bitacora::select('accion')
+            ->distinct()
+            ->orderBy('accion')
+            ->pluck('accion');
+
+        return view('bitacora.index', compact('bitacoras', 'accionesDisponibles'));
     }
 }
