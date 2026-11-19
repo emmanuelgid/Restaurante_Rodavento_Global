@@ -168,99 +168,104 @@
     @stack('styles')
 </head>
 <body>
-    <div id="app">
-        <nav class="navbar navbar-expand-lg navbar-dark navbar-rodavento sticky-top">
-            <div class="container-fluid px-lg-4">
-                <a class="navbar-brand navbar-brand-logo" href="{{ url('/home') }}">
-                    <i class="bi bi-compass text-warning fs-3"></i>
-                    <div>
-                        HOTEL RODAVENTO
-                        <span>Restaurante & Experiencias</span>
-                    </div>
-                </a>
+<div id="app">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-rodavento sticky-top">
+        <div class="container-fluid px-lg-4">
+            <a class="navbar-brand navbar-brand-logo" href="{{ url('/home') }}">
+                <i class="bi bi-compass text-warning fs-3"></i>
+                <div>
+                    HOTEL RODAVENTO
+                    <span>Restaurante & Experiencias</span>
+                </div>
+            </a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    @auth
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                @auth
                     <!-- Main Navigation Links -->
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+                        <li class="nav-item">
+                            <a class="nav-link-custom {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+
+                        @can('reservaciones.gestionar')
                             <li class="nav-item">
-                                <a class="nav-link-custom {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
-                                    <i class="bi bi-speedometer2"></i> Dashboard
+                                <a class="nav-link-custom {{ request()->routeIs('reservaciones.*') ? 'active' : '' }}" href="{{ route('reservaciones.index') }}">
+                                    <i class="bi bi-calendar-check"></i> Reservaciones
                                 </a>
                             </li>
+                        @endcan
 
-                            @can('reservaciones.gestionar')
-                                <li class="nav-item">
-                                    <a class="nav-link-custom {{ request()->routeIs('reservaciones.*') ? 'active' : '' }}" href="{{ route('reservaciones.index') }}">
-                                        <i class="bi bi-calendar-check"></i> Reservaciones
-                                    </a>
-                                </li>
-                            @endcan
+                        @can('comandas.operar')
+                            <li class="nav-item">
+                                <a class="nav-link-custom {{ request()->routeIs('comandas.*') ? 'active' : '' }}" href="{{ route('comandas.index') }}">
+                                    <i class="bi bi-receipt"></i> Comandas & POS
+                                </a>
+                            </li>
+                        @endcan
 
-                            @can('comandas.operar')
-                                <li class="nav-item">
-                                    <a class="nav-link-custom {{ request()->routeIs('comandas.*') ? 'active' : '' }}" href="{{ route('comandas.index') }}">
-                                        <i class="bi bi-receipt"></i> Comandas & POS
-                                    </a>
-                                </li>
-                            @endcan
+                        @can('menu.ver')
+                            <li class="nav-item">
+                                <a class="nav-link-custom {{ request()->routeIs('platillos.*') ? 'active' : '' }}" href="{{ route('platillos.index') }}">
+                                    <i class="bi bi-egg-fried"></i> Carta & Menú
+                                </a>
+                            </li>
+                        @endcan
 
-                            @can('menu.ver')
-                                <li class="nav-item">
-                                    <a class="nav-link-custom {{ request()->routeIs('platillos.*') ? 'active' : '' }}" href="{{ route('platillos.index') }}">
-                                        <i class="bi bi-egg-fried"></i> Carta & Menú
-                                    </a>
-                                </li>
-                            @endcan
+                        @can('clientes.admin')
+                            <li class="nav-item">
+                                <a class="nav-link-custom {{ request()->routeIs('clientes.*') ? 'active' : '' }}" href="{{ route('clientes.index') }}">
+                                    <i class="bi bi-people"></i> Clientes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link-custom {{ request()->routeIs('lealtad.*') ? 'active' : '' }}" href="{{ route('lealtad.index') }}">
+                                    <i class="bi bi-star-fill text-warning"></i> Lealtad VIP
+                                </a>
+                            </li>
+                        @endcan
 
-                            @can('clientes.admin')
-                                <li class="nav-item">
-                                    <a class="nav-link-custom {{ request()->routeIs('clientes.*') ? 'active' : '' }}" href="{{ route('clientes.index') }}">
-                                        <i class="bi bi-people"></i> Clientes
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link-custom {{ request()->routeIs('lealtad.*') ? 'active' : '' }}" href="{{ route('lealtad.index') }}">
-                                        <i class="bi bi-star-fill text-warning"></i> Lealtad VIP
-                                    </a>
-                                </li>
-                            @endcan
+                        @canany(['sucursales.admin', 'mesas.ver', 'empleados.ver', 'auditoria.ver', 'empleados.admin'])
+                            <li class="nav-item dropdown">
+                                <a class="nav-link-custom dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-gear"></i> Más Módulos
+                                </a>
+                                <ul class="dropdown-menu shadow border-0">
+                                    @can('sucursales.admin')
+                                        <li><a class="dropdown-item py-2" href="{{ route('sucursales.index') }}"><i class="bi bi-buildings me-2 text-primary"></i> Sucursales</a></li>
+                                    @endcan
 
-                            @canany(['sucursales.admin', 'mesas.ver', 'empleados.ver', 'auditoria.ver'])
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link-custom dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-gear"></i> Más Módulos
-                                    </a>
-                                    <ul class="dropdown-menu shadow border-0">
-                                        @can('sucursales.admin')
-                                            <li><a class="dropdown-item py-2" href="{{ route('sucursales.index') }}"><i class="bi bi-buildings me-2 text-primary"></i> Sucursales</a></li>
-                                        @endcan
+                                    @can('mesas.ver')
+                                        <li><a class="dropdown-item py-2" href="{{ route('mesas.index') }}"><i class="bi bi-grid-3x3-gap me-2 text-success"></i> Mesas & Sala</a></li>
+                                    @endcan
 
-                                        @can('mesas.ver')
-                                            <li><a class="dropdown-item py-2" href="{{ route('mesas.index') }}"><i class="bi bi-grid-3x3-gap me-2 text-success"></i> Mesas & Sala</a></li>
-                                        @endcan
+                                    @can('empleados.ver')
+                                        <li><a class="dropdown-item py-2" href="{{ route('empleados.index') }}"><i class="bi bi-person-badge me-2 text-info"></i> Personal & Turnos</a></li>
+                                    @endcan
 
-                                        @can('empleados.ver')
-                                            <li><a class="dropdown-item py-2" href="{{ route('empleados.index') }}"><i class="bi bi-person-badge me-2 text-info"></i> Personal & Turnos</a></li>
-                                        @endcan
+                                    <!-- Opción exclusiva para aprobación de cuentas de nuevos empleados -->
+                                    @can('empleados.admin')
+                                        <li><a class="dropdown-item py-2" href="{{ route('admin.empleados.pendientes') }}"><i class="bi bi-person-check-fill me-2 text-danger"></i> Aprobación de Cuentas</a></li>
+                                    @endcan
 
-                                        @if(auth()->user()->canAny(['sucursales.admin', 'mesas.ver', 'empleados.ver']) && auth()->user()->can('auditoria.ver'))
-                                            <li><hr class="dropdown-divider"></li>
-                                        @endif
+                                    @if(auth()->user()->canAny(['sucursales.admin', 'mesas.ver', 'empleados.ver', 'empleados.admin']) && auth()->user()->can('auditoria.ver'))
+                                        <li><hr class="dropdown-divider"></li>
+                                    @endif
 
-                                        @can('auditoria.ver')
-                                            <li><a class="dropdown-item py-2" href="{{ route('bitacora.index') }}"><i class="bi bi-shield-lock me-2 text-danger"></i> Auditoría & Bitácora</a></li>
-                                        @endcan
+                                    @can('auditoria.ver')
+                                        <li><a class="dropdown-item py-2" href="{{ route('bitacora.index') }}"><i class="bi bi-shield-lock me-2 text-danger"></i> Auditoría & Bitácora</a></li>
+                                    @endcan
 
-                                        <li><a class="dropdown-item py-2" href="{{ route('welcome') }}" target="_blank"><i class="bi bi-globe me-2 text-secondary"></i> Ver Sitio Web Público</a></li>
-                                    </ul>
-                                </li>
-                            @endcanany
-                        </ul>
+                                    <li><a class="dropdown-item py-2" href="{{ route('welcome') }}" target="_blank"><i class="bi bi-globe me-2 text-secondary"></i> Ver Sitio Web Público</a></li>
+                                </ul>
+                            </li>
+                        @endcanany
+                    </ul>
 
                     <!-- User and Branch Profile -->
                     <ul class="navbar-nav ms-auto align-items-center">
@@ -286,63 +291,63 @@
                             </div>
                         </li>
                     </ul>
-                    @else
+                @else
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
                             <a class="nav-link text-white" href="{{ route('login') }}"><i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión</a>
                         </li>
                     </ul>
-                    @endauth
-                </div>
+                @endauth
             </div>
-        </nav>
-
-        <!-- Flash Alert Messages -->
-        <div class="container-fluid px-lg-4 mt-3">
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 d-flex align-items-center" role="alert">
-                    <i class="bi bi-check-circle-fill fs-5 me-2"></i>
-                    <div>{{ session('success') }}</div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
-                    <div>{{ session('error') }}</div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0" role="alert">
-                    <div class="fw-bold mb-1"><i class="bi bi-exclamation-circle-fill me-1"></i> Verifique los siguientes campos:</div>
-                    <ul class="mb-0 ps-3">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
         </div>
+    </nav>
 
-        <!-- Main Body Content -->
-        <main class="py-3">
-            @yield('content')
-        </main>
-
-        <footer class="mt-5 py-4 bg-white border-top text-center text-muted small">
-            <div class="container">
-                <div class="fw-semibold text-dark mb-1">Hotel & Restaurante Rodavento — Sistema de Gestión Integral</div>
-                <div>Valle de Bravo, Estado de México</div>
+    <!-- Flash Alert Messages -->
+    <div class="container-fluid px-lg-4 mt-3">
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 d-flex align-items-center" role="alert">
+                <i class="bi bi-check-circle-fill fs-5 me-2"></i>
+                <div>{{ session('success') }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-        </footer>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 d-flex align-items-center" role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+                <div>{{ session('error') }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0" role="alert">
+                <div class="fw-bold mb-1"><i class="bi bi-exclamation-circle-fill me-1"></i> Verifique los siguientes campos:</div>
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
     </div>
 
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    @stack('scripts')
+    <!-- Main Body Content -->
+    <main class="py-3">
+        @yield('content')
+    </main>
+
+    <footer class="mt-5 py-4 bg-white border-top text-center text-muted small">
+        <div class="container">
+            <div class="fw-semibold text-dark mb-1">Hotel & Restaurante Rodavento — Sistema de Gestión Integral</div>
+            <div>Valle de Bravo, Estado de México</div>
+        </div>
+    </footer>
+</div>
+
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+@stack('scripts')
 </body>
 </html>

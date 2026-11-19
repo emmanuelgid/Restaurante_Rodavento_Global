@@ -517,7 +517,7 @@
                     <i class="bi bi-buildings"></i>
                 </div>
 
-                <span>Portal institucional</span>
+                <span>Portal Operativo</span>
             </div>
 
             <div class="brand-main">

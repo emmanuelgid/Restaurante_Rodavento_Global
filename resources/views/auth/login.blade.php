@@ -375,7 +375,7 @@
                     </div>
 
                     <div class="login-overline">
-                        Portal institucional
+                        Portal Operativo
                     </div>
 
                     <h1>
