@@ -71,7 +71,7 @@
 
                         <div class="col-12">
                             <label class="form-label fw-semibold">Seleccionar Mesa en Sucursal *</label>
-                            <select name="mesa_sucursal_id" class="form-select" required>
+                            <select name="mesa_sucursal_id" class="form-select @error('mesa_sucursal_id') is-invalid @enderror" required>
                                 <option value="">Seleccionar mesa disponible...</option>
                                 @foreach($sucursales as $suc)
                                     <optgroup label="{{ $suc->nombre }}">
@@ -83,6 +83,11 @@
                                     </optgroup>
                                 @endforeach
                             </select>
+                            @error('mesa_sucursal_id')
+                                <div class="invalid-feedback fw-bold">
+                                    {{ $message }}
+                                </div>
+                            @enderror
                         </div>
 
                         <div class="col-12">

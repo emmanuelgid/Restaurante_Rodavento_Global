@@ -52,7 +52,7 @@ class ReservacionController extends Controller
         $request->validate([
             'cliente_id' => 'required|exists:cliente,id',
             'fecha_hora_inicio' => 'required|date',
-            'horas_duracion' => 'nullable|integer|min:1|max:8',
+            'horas_duracion' => 'nullable|integer|min:0|max:8',
             'cantidad_personas' => 'required|integer|min:1|max:50',
             'mesa_sucursal_id' => 'required|exists:mesa_sucursal,id',
             'notas' => 'nullable|string',
@@ -62,6 +62,24 @@ class ReservacionController extends Controller
         $horas = (int) ($request->horas_duracion ?: 2);
         $fin = $inicio->copy()->addHours($horas);
 
+        // 1. Validar si la mesa ya está ocupada en ese rango de tiempo
+        $existeEmpalme = Reservacion::where('estatus', '!=', 'cancelada')
+            ->whereHas('mesasAsignadas', function ($query) use ($request) {
+                $query->where('mesa_sucursal_id', $request->mesa_sucursal_id);
+            })
+            ->where('fecha_hora_inicio', '<', $fin)
+            ->where('fecha_hora_final', '>', $inicio)
+            ->exists();
+
+        if ($existeEmpalme) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'mesa_sucursal_id' => 'La mesa seleccionada ya se encuentra reservada en ese horario. Por favor elige otra mesa u otro horario.'
+                ]);
+        }
+
+        // 2. Si la mesa está libre, proceder a guardar
         return DB::transaction(function () use ($request, $inicio, $fin) {
             $reservacion = Reservacion::create([
                 'cliente_id' => $request->cliente_id,
@@ -115,7 +133,6 @@ class ReservacionController extends Controller
         $reservacion->estatus = $request->estatus;
         $reservacion->save();
 
-        // Si pasa a 'en_mesa', crear la NotaReservacion si no existe
         if ($request->estatus === 'en_mesa' && !$reservacion->nota) {
             $mesaSuc = $reservacion->mesasAsignadas->first();
             $sucursalId = $mesaSuc ? $mesaSuc->mesaSucursal->sucursal_id : 1;
