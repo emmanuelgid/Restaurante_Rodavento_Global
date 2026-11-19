@@ -15,7 +15,22 @@ use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\Auth\EmpleadoAprobacionController;
 
 Route::get('/', function () {
-    return view('welcome');
+    try {
+        $platillos = \App\Models\Platillo::with(['categoria', 'ingredientes', 'alergenos'])
+            ->where('disponible', true)
+            ->orderBy('id', 'asc')
+            ->get();
+        $sucursales = \App\Models\Sucursal::where('activa', true)->get();
+        $categorias = \App\Models\CategoriaPlatillo::whereHas('platillos', function ($q) {
+            $q->where('disponible', true);
+        })->get();
+    } catch (\Throwable $e) {
+        $platillos = collect();
+        $sucursales = collect();
+        $categorias = collect();
+    }
+
+    return view('welcome', compact('platillos', 'sucursales', 'categorias'));
 })->name('welcome');
 
 Auth::routes();
