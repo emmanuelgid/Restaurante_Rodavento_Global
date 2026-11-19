@@ -50,8 +50,9 @@
         </div>
     </div>
 
-    <div>
-        {{ $bitacoras->links() }}
+    <!-- Paginación estilizada correctamente para Bootstrap 5 -->
+    <div class="d-flex justify-content-end mb-4">
+        {{ $bitacoras->links('pagination::bootstrap-5') }}
     </div>
 </div>
 @endsection
