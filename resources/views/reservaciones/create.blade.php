@@ -2,6 +2,18 @@
 
 @section('title', 'Nueva Reservación')
 
+@push('styles')
+<!-- Tom Select CSS (Estilos para el buscador dinámico) -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<style>
+    /* Ajuste visual para que coincida con la estética del formulario */
+    .ts-control {
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.75rem;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container py-4">
     <div class="row justify-content-center">
@@ -22,8 +34,9 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Cliente / Huésped *</label>
-                            <select name="cliente_id" class="form-select" required>
-                                <option value="">Seleccione al cliente...</option>
+                            <!-- ID añadido: select-cliente -->
+                            <select id="select-cliente" name="cliente_id" class="form-select" required>
+                                <option value="">Seleccione o busque al cliente...</option>
                                 @foreach($clientes as $cli)
                                     <option value="{{ $cli->id }}" {{ old('cliente_id') == $cli->id ? 'selected' : '' }}>
                                         {{ $cli->nombre_completo }} — {{ $cli->correo }} ({{ $cli->puntos_saldo }} pts)
@@ -88,3 +101,20 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<!-- Tom Select JS (Inicialización del buscador) -->
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        new TomSelect('#select-cliente', {
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            },
+            placeholder: "Escribe el nombre o correo del cliente..."
+        });
+    });
+</script>
+@endpush
