@@ -171,34 +171,52 @@ class ClienteController extends Controller
     public function ajustarPuntos(Request $request, Cliente $cliente)
     {
         $request->validate([
-            'puntos' => 'required|integer|not_in:0',
-            'tipo' => 'required|in:acumulacion,redencion,bonificacion,ajuste',
+            'puntos' => 'required|integer|min:1',
+            'tipo'   => 'required|in:acumulacion,redencion,bonificacion,ajuste',
             'motivo' => 'required|string|max:200',
         ]);
 
-        $puntos = $request->puntos;
+        $cantPuntos = (int) $request->puntos;
         $tipo = $request->tipo;
+
+        if ($tipo === 'redencion') {
+            // Validar saldo suficiente
+            if ($cliente->puntos_saldo < $cantPuntos) {
+                return back()->withErrors([
+                    'puntos' => "El cliente no cuenta con saldo suficiente. Saldo disponible: {$cliente->puntos_saldo} pts."
+                ]);
+            }
+
+            // Deducción de saldo disponible (sin afectar el histórico de puntos acumulados)
+            $cliente->puntos_saldo -= $cantPuntos;
+            $puntosMovimiento = -$cantPuntos; // Guardar valor negativo (-500) para el historial
+        } else {
+            // Adición a saldo disponible y acumulado histórico
+            $cliente->puntos_saldo += $cantPuntos;
+            $cliente->puntos_acumulados += $cantPuntos;
+            $puntosMovimiento = $cantPuntos; // Guardar valor positivo (+500)
+        }
+
+        $cliente->save();
 
         MovimientoPuntos::create([
             'cliente_id' => $cliente->id,
-            'puntos' => $puntos,
-            'tipo' => $tipo,
-            'fecha' => Carbon::now(),
+            'puntos'     => $puntosMovimiento,
+            'tipo'       => $tipo,
+            'fecha'      => Carbon::now(),
         ]);
-
-        $cliente->puntos_saldo = max(0, $cliente->puntos_saldo + $puntos);
-        if ($puntos > 0) {
-            $cliente->puntos_acumulados += $puntos;
-        }
-        $cliente->save();
 
         Bitacora::create([
-            'usuario_id' => Auth::id(),
-            'accion' => 'PTS_AJUSTE',
-            'registro_id' => "CLI_{$cliente->id}_PTS_{$puntos}_{$tipo}",
-            'fecha_hora' => Carbon::now(),
+            'usuario_id'  => Auth::id(),
+            'accion'      => 'PTS_AJUSTE',
+            'registro_id' => "CLI_{$cliente->id}_PTS_{$puntosMovimiento}_{$tipo}",
+            'fecha_hora'  => Carbon::now(),
         ]);
 
-        return back()->with('success', "Ajuste de {$puntos} puntos aplicado correctamente.");
+        $mensaje = ($tipo === 'redencion')
+            ? "Se han canjeado exitosamente {$cantPuntos} puntos."
+            : "Ajuste de +{$cantPuntos} puntos bonificados correctamente.";
+
+        return back()->with('success', $mensaje);
     }
 }

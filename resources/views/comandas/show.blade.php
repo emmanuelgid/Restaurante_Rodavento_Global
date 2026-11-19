@@ -124,7 +124,6 @@
                                                 <span class="badge {{ $badgeColor }} px-2 py-1 me-2 fs-6">
                                                     <i class="bi bi-clock-history me-1"></i>{{ $tiempo }}
                                                 </span>
-                                                <span class="small text-muted fw-normal">({{ $detalles->count() }} ítem(s))</span>
                                             </td>
                                         </tr>
 
