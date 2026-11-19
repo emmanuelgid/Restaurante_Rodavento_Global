@@ -110,7 +110,6 @@
                                     @endphp
 
                                     @foreach($gruposPorTiempo as $tiempo => $detalles)
-                                        <!-- Encabezado de Tiempo de Servicio -->
                                         @php
                                             $badgeColor = match(strtolower($tiempo)) {
                                                 '1er tiempo' => 'bg-primary',
@@ -134,7 +133,6 @@
                                                 <td class="ps-4">
                                                     <div class="fw-bold text-dark">{{ $det->platillo ? $det->platillo->nombre : 'Platillo' }}</div>
 
-                                                    <!-- Motivo de Cancelación / Ajuste -->
                                                     @php
                                                         $ajusteCancelacion = $det->ajustes ? $det->ajustes->whereIn('tipo', ['cancelacion', 'merma'])->last() : null;
                                                     @endphp
@@ -145,14 +143,12 @@
                                                         </small>
                                                     @endif
 
-                                                    <!-- Instrucciones de cocina -->
                                                     @if($det->instrucciones_parsed)
                                                         <small class="text-danger d-block mt-1">
                                                             <i class="bi bi-chat-left-dots-fill me-1"></i>{{ $det->instrucciones_parsed }}
                                                         </small>
                                                     @endif
 
-                                                    <!-- Cortesía -->
                                                     @if($det->es_cortesia)
                                                         <span class="badge bg-warning text-dark small mt-1">Cortesía de la Casa</span>
                                                     @endif
@@ -170,7 +166,6 @@
                                                         {{ $det->estatus }}
                                                     </span>
                                                 </td>
-                                                <!-- Sección B: Bloqueo de Ajustes en Cuentas Liquidadas -->
                                                 <td>
                                                     @if(!$estaCerrada)
                                                         @if($det->estatus !== 'cancelado')
@@ -330,11 +325,10 @@
                         <form method="POST" action="{{ route('comandas.cerrar', $nota->id) }}">
                             @csrf
                             <div class="row g-3">
-                                <!-- Bloque de Descuento con Botones de Porcentaje para Auditoría -->
+                                <!-- Bloque de Descuento con Botones de Porcentaje -->
                                 <div class="col-md-6 contenedor-descuento" data-subtotal="{{ $nota->subtotal ?? 0 }}">
                                     <label class="form-label small fw-semibold">Descuento Aplicado</label>
                                     
-                                    <!-- Recuadros de Selección Rápida (%) -->
                                     <div class="d-flex gap-2 mb-2">
                                         <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="10">10%</button>
                                         <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="20">20%</button>
@@ -342,7 +336,6 @@
                                         <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="40">40%</button>
                                     </div>
 
-                                    <!-- Entrada Manual de Porcentaje o Monto Directo -->
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light text-muted small">%</span>
                                         <input type="number" class="form-control input-pct-descuento" placeholder="Ej. 17" min="0" max="100" step="1">
@@ -353,13 +346,11 @@
                                     <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Selecciona %, escribe % libre o ingresa el monto en pesos.</small>
                                 </div>
 
-                                <!-- Propina -->
                                 <div class="col-md-6">
                                     <label class="form-label small fw-semibold">Propina ($ MXN)</label>
                                     <input type="number" step="any" name="propina" class="form-control form-control-sm" value="{{ $nota->propina }}">
                                 </div>
 
-                                <!-- Calificación del Servicio -->
                                 <div class="col-md-4">
                                     <label class="form-label small fw-semibold">Calificación</label>
                                     <select name="calificacion" class="form-select form-select-sm">
@@ -371,7 +362,6 @@
                                     </select>
                                 </div>
 
-                                <!-- Comentarios -->
                                 <div class="col-md-8">
                                     <label class="form-label small fw-semibold">Comentarios</label>
                                     <input type="text" name="comentarios" class="form-control form-control-sm" value="{{ $nota->comentarios }}">
@@ -395,7 +385,6 @@
                         <div class="col-md-6 contenedor-descuento" data-subtotal="{{ $nota->subtotal ?? 0 }}">
                             <label class="form-label fw-semibold">Descuento Aplicado</label>
                             
-                            <!-- Recuadros de Selección Rápida (%) -->
                             <div class="d-flex gap-2 mb-2">
                                 <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="10">10%</button>
                                 <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="20">20%</button>
@@ -403,7 +392,6 @@
                                 <button type="button" class="btn btn-outline-secondary btn-sm flex-fill btn-descuento-pct" data-pct="40">40%</button>
                             </div>
 
-                            <!-- Entrada Manual de Porcentaje o Monto Directo -->
                             <div class="input-group">
                                 <span class="input-group-text bg-light text-muted small">%</span>
                                 <input type="number" class="form-control input-pct-descuento" placeholder="Ej. 17" min="0" max="100" step="1">
@@ -442,27 +430,24 @@
             @endif
         </div>
 
-        <!-- Columna Derecha: Catálogo Rápido para Agregar a Comanda -->
+        <!-- Columna Derecha: Armar Orden Múltiple para Cocina -->
         <div class="col-lg-5">
-            <div class="card card-custom p-4">
-                <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-plus-circle me-2 text-warning"></i> Enviar Orden a Cocina / Barra</h5>
+            <div class="card card-custom p-4 shadow-sm">
+                <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-plus-circle me-2 text-warning"></i> Armar Orden para Cocina / Barra</h5>
 
                 @if($estaCerrada)
                     <div class="text-center py-4 text-muted">
                         <i class="bi bi-lock-fill fs-1 text-secondary mb-2 d-block"></i>
                         <h6 class="fw-bold text-dark">Comanda Liquidada y Cerrada</h6>
-                        <p class="small text-muted mb-3">No es posible agregar más órdenes a una cuenta cerrada. Si el comensal desea ordenar más productos, abra una nueva comanda.</p>
-                        <a href="{{ route('comandas.create') }}" class="btn btn-sm btn-rv-primary">
-                            <i class="bi bi-plus-circle me-1"></i> Abrir Nueva Comanda
-                        </a>
+                        <p class="small text-muted mb-3">No es posible agregar más órdenes a una cuenta cerrada.</p>
                     </div>
                 @else
                     @php $firstPedido = $nota->pedidos->first(); @endphp
                     @if($firstPedido)
-                    <form method="POST" action="{{ route('comandas.agregar', $firstPedido->id) }}">
+                    <form method="POST" action="{{ route('comandas.agregar', $firstPedido->id) }}" id="formEnviarComanda">
                         @csrf
                         
-                        <!-- Buscador Rápido y Seleccionador de Platillo -->
+                        <!-- Seleccionar Platillo -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Seleccionar Platillo *</label>
                             <div class="input-group mb-2">
@@ -472,10 +457,10 @@
                                 <input type="text" id="buscarPlatillo" class="form-control border-start-0 ps-0" placeholder="Buscar por nombre o categoría...">
                             </div>
 
-                            <select name="platillo_id" id="selectPlatillo" class="form-select form-select-lg" required>
+                            <select id="selectPlatillo" class="form-select form-select-lg">
                                 <option value="" disabled selected hidden>Selecciona del menú...</option>
                                 @foreach($platillosDisponibles as $plat)
-                                    <option value="{{ $plat->id }}">
+                                    <option value="{{ $plat->id }}" data-nombre="{{ $plat->nombre }}" data-precio="{{ $plat->precio }}">
                                         [{{ $plat->categoria ? $plat->categoria->nombre : 'General' }}] {{ $plat->nombre }} — ${{ number_format($plat->precio, 2) }}
                                     </option>
                                 @endforeach
@@ -486,42 +471,72 @@
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <label class="form-label fw-semibold">Cantidad *</label>
-                                <input type="number" name="cantidad" class="form-control" value="1" min="1" max="20" required>
+                                <input type="number" id="inputCantidad" class="form-control" value="1" min="1" max="20">
                             </div>
                             <div class="col-6 d-flex align-items-end">
                                 <div class="form-check pb-2">
-                                    <input class="form-check-input" type="checkbox" name="es_cortesia" value="1" id="es_cortesia">
-                                    <label class="form-check-label fw-semibold small" for="es_cortesia">¿Es Cortesía?</label>
+                                    <input class="form-check-input" type="checkbox" id="checkCortesia">
+                                    <label class="form-check-label fw-semibold small" for="checkCortesia">¿Es Cortesía?</label>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Botones de Tiempo de Servicio -->
+                        <!-- Tiempo de Servicio -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold d-block">Tiempo de Servicio / Marcha *</label>
-                            <div class="btn-group w-100" role="group" aria-label="Tiempos de servicio">
-                                <input type="radio" class="btn-check" name="tiempo_servicio" id="t1" value="1er Tiempo" checked>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="tiempo_servicio_opt" id="t1" value="1er Tiempo" checked>
                                 <label class="btn btn-outline-secondary btn-sm" for="t1">1er Tiempo</label>
 
-                                <input type="radio" class="btn-check" name="tiempo_servicio" id="t2" value="2do Tiempo">
+                                <input type="radio" class="btn-check" name="tiempo_servicio_opt" id="t2" value="2do Tiempo">
                                 <label class="btn btn-outline-secondary btn-sm" for="t2">2do Tiempo</label>
 
-                                <input type="radio" class="btn-check" name="tiempo_servicio" id="t3" value="Postre">
+                                <input type="radio" class="btn-check" name="tiempo_servicio_opt" id="t3" value="Postre">
                                 <label class="btn btn-outline-secondary btn-sm" for="t3">Postre</label>
 
-                                <input type="radio" class="btn-check" name="tiempo_servicio" id="t4" value="Barra">
+                                <input type="radio" class="btn-check" name="tiempo_servicio_opt" id="t4" value="Barra">
                                 <label class="btn btn-outline-secondary btn-sm" for="t4">Barra</label>
                             </div>
                         </div>
 
                         <!-- Instrucciones Especiales -->
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Instrucciones Especiales para Cocina</label>
-                            <input type="text" name="notas" class="form-control" placeholder="Ej. Sin cebolla, término medio, aderezo aparte...">
+                            <label class="form-label fw-semibold">Instrucciones Especiales</label>
+                            <input type="text" id="inputNotas" class="form-control" placeholder="Ej. Sin cebolla, término medio...">
                         </div>
 
-                        <button type="submit" class="btn btn-rv-gold w-100 py-2 fw-semibold">
-                            <i class="bi bi-send-fill me-1"></i> Agregar a Comanda
+                        <!-- Botón para añadir a la pre-lista -->
+                        <button type="button" id="btnAgregarAPrelista" class="btn btn-outline-dark w-100 mb-3 fw-semibold">
+                            <i class="bi bi-plus-lg me-1"></i> Añadir Platillo a la Orden
+                        </button>
+
+                        <!-- Pre-lista de Platillos antes de Enviar -->
+                        <div class="border rounded p-3 mb-3 bg-light" id="boxPrelista" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0 text-dark small text-uppercase"><i class="bi bi-list-check me-1"></i> Pre-Lista por Enviar</h6>
+                                <span class="badge bg-primary" id="badgeCantidadItems">0 ítems</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered align-middle mb-0 bg-white">
+                                    <thead class="table-light extra-small text-muted">
+                                        <tr>
+                                            <th>Tiempo</th>
+                                            <th>Platillo</th>
+                                            <th class="text-center">Cant.</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyPrelista"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Input oculto que envía el JSON al controlador -->
+                        <input type="hidden" name="items" id="itemsInputJson">
+
+                        <!-- Botón Submit General para Cocina -->
+                        <button type="submit" id="btnEnviarTodoCocina" class="btn btn-rv-gold w-100 py-2 fw-semibold" disabled>
+                            <i class="bi bi-send-fill me-1"></i> Enviar Comanda Completa a Cocina
                         </button>
                     </form>
                     @endif
@@ -594,10 +609,98 @@ document.addEventListener('DOMContentLoaded', function () {
         myModal.show();
     }
 
-    // 2. Buscador en tiempo real de platillos en el menú
-    const inputBuscar = document.getElementById('buscarPlatillo');
-    const selectPlatillo = document.getElementById('selectPlatillo');
+    // 2. Lógica para Pre-Lista de Platillos en Comanda (Carrito Múltiple)
+    let preLista = [];
 
+    const selectPlatillo = document.getElementById('selectPlatillo');
+    const inputCantidad = document.getElementById('inputCantidad');
+    const checkCortesia = document.getElementById('checkCortesia');
+    const inputNotas = document.getElementById('inputNotas');
+    const btnAgregarAPrelista = document.getElementById('btnAgregarAPrelista');
+    const boxPrelista = document.getElementById('boxPrelista');
+    const tbodyPrelista = document.getElementById('tbodyPrelista');
+    const badgeCantidadItems = document.getElementById('badgeCantidadItems');
+    const itemsInputJson = document.getElementById('itemsInputJson');
+    const btnEnviarTodoCocina = document.getElementById('btnEnviarTodoCocina');
+
+    if (btnAgregarAPrelista) {
+        btnAgregarAPrelista.addEventListener('click', function () {
+            const optionSeleccionada = selectPlatillo.options[selectPlatillo.selectedIndex];
+            
+            if (!selectPlatillo.value || optionSeleccionada.disabled) {
+                alert('Por favor selecciona un platillo del menú.');
+                return;
+            }
+
+            const tiempoRadio = document.querySelector('input[name="tiempo_servicio_opt"]:checked');
+            const tiempo = tiempoRadio ? tiempoRadio.value : '1er Tiempo';
+
+            const item = {
+                platillo_id: selectPlatillo.value,
+                nombre: optionSeleccionada.getAttribute('data-nombre') || optionSeleccionada.text,
+                cantidad: parseInt(inputCantidad.value) || 1,
+                es_cortesia: checkCortesia.checked ? 1 : 0,
+                tiempo_servicio: tiempo,
+                notas: inputNotas.value.trim()
+            };
+
+            preLista.push(item);
+            actualizarRenderPrelista();
+
+            // Limpiar selección
+            inputNotas.value = '';
+            inputCantidad.value = 1;
+            checkCortesia.checked = false;
+            selectPlatillo.selectedIndex = 0;
+        });
+    }
+
+    function actualizarRenderPrelista() {
+        tbodyPrelista.innerHTML = '';
+
+        if (preLista.length === 0) {
+            boxPrelista.style.display = 'none';
+            btnEnviarTodoCocina.disabled = true;
+            itemsInputJson.value = '';
+            return;
+        }
+
+        boxPrelista.style.display = 'block';
+        btnEnviarTodoCocina.disabled = false;
+        badgeCantidadItems.textContent = `${preLista.length} ítem(s)`;
+
+        preLista.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span class="badge bg-secondary extra-small">${item.tiempo_servicio}</span></td>
+                <td>
+                    <div class="fw-bold extra-small text-dark">${item.nombre}</div>
+                    ${item.notas ? `<small class="text-muted d-block" style="font-size: 0.7rem;">${item.notas}</small>` : ''}
+                    ${item.es_cortesia ? `<span class="badge bg-warning text-dark extra-small">Cortesía</span>` : ''}
+                </td>
+                <td class="text-center font-semibold">${item.cantidad}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1 btn-eliminar-item" data-index="${index}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbodyPrelista.appendChild(tr);
+        });
+
+        itemsInputJson.value = JSON.stringify(preLista);
+
+        document.querySelectorAll('.btn-eliminar-item').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const idx = parseInt(this.getAttribute('data-index'));
+                preLista.splice(idx, 1);
+                actualizarRenderPrelista();
+            });
+        });
+    }
+
+    // 3. Buscador rápido de platillos en el menú
+    const inputBuscar = document.getElementById('buscarPlatillo');
     if (inputBuscar && selectPlatillo) {
         const opcionesOriginales = Array.from(selectPlatillo.options);
 
@@ -607,19 +710,16 @@ document.addEventListener('DOMContentLoaded', function () {
             selectPlatillo.innerHTML = '';
             
             opcionesOriginales.forEach(function (opcion) {
-                // Mantener siempre el placeholder inicial
                 if (opcion.value === '') {
                     selectPlatillo.appendChild(opcion);
                     return;
                 }
 
-                // Filtrar por nombre, categoría o precio
                 if (opcion.text.toLowerCase().includes(busqueda)) {
                     selectPlatillo.appendChild(opcion);
                 }
             });
 
-            // Seleccionar automáticamente la primera opción filtrada
             if (busqueda !== '' && selectPlatillo.options.length > 1) {
                 selectPlatillo.selectedIndex = 1;
             } else {
@@ -628,14 +728,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 3. Calculadora y botones rápidos de porcentaje de descuento
+    // 4. Calculadora y botones rápidos de porcentaje de descuento
     document.querySelectorAll('.contenedor-descuento').forEach(function (contenedor) {
         const subtotal = parseFloat(contenedor.dataset.subtotal || 0);
         const inputPct = contenedor.querySelector('.input-pct-descuento');
         const inputMonto = contenedor.querySelector('.input-monto-descuento');
         const botonesPct = contenedor.querySelectorAll('.btn-descuento-pct');
 
-        // Inicializar porcentaje si ya existe un monto en el campo
         if (subtotal > 0 && inputMonto && parseFloat(inputMonto.value) > 0) {
             const pctInicial = Math.round((parseFloat(inputMonto.value) / subtotal) * 100);
             if (inputPct) inputPct.value = pctInicial;
@@ -647,7 +746,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Clics en botones rápidos (10%, 20%, 30%, 40%)
         botonesPct.forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -663,7 +761,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
-        // Ingreso manual de porcentaje libre (ej. 17%)
         if (inputPct) {
             inputPct.addEventListener('input', function () {
                 const pct = parseFloat(this.value) || 0;
@@ -682,7 +779,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Edición directa del monto en pesos ($ MXN)
         if (inputMonto) {
             inputMonto.addEventListener('input', function () {
                 const monto = parseFloat(this.value) || 0;

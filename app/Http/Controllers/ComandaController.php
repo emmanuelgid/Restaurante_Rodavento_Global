@@ -125,6 +125,53 @@ class ComandaController extends Controller
 
     public function agregarPlatillo(Request $request, $pedidoId)
     {
+        $pedido = Pedido::findOrFail($pedidoId);
+
+        // 1. Procesamiento en lote desde la Pre-Lista (JSON)
+        if ($request->filled('items')) {
+            $items = json_decode($request->items, true);
+
+            if (is_array($items) && count($items) > 0) {
+                foreach ($items as $item) {
+                    if (empty($item['platillo_id'])) continue;
+
+                    $platillo = Platillo::find($item['platillo_id']);
+                    if (!$platillo) continue;
+
+                    $tiempo = $item['tiempo_servicio'] ?? '1er Tiempo';
+                    $instrucciones = trim($item['notas'] ?? '');
+                    $notaFinal = '[' . $tiempo . ']' . ($instrucciones !== '' ? ' ' . $instrucciones : '');
+                    $esCortesia = !empty($item['es_cortesia']);
+                    $cantidad = (int) ($item['cantidad'] ?? 1);
+
+                    $detalleExistente = PedidoDetalle::where('pedido_id', $pedido->id)
+                        ->where('platillo_id', $platillo->id)
+                        ->where('es_cortesia', $esCortesia)
+                        ->where('notas', $notaFinal)
+                        ->first();
+
+                    if ($detalleExistente) {
+                        $detalleExistente->cantidad += $cantidad;
+                        $detalleExistente->save();
+                    } else {
+                        PedidoDetalle::create([
+                            'pedido_id' => $pedido->id,
+                            'platillo_id' => $platillo->id,
+                            'cantidad' => $cantidad,
+                            'cantidad_cancelada' => 0,
+                            'precio_unitario' => $platillo->precio,
+                            'es_cortesia' => $esCortesia,
+                            'notas' => $notaFinal,
+                        ]);
+                    }
+                }
+
+                $this->recalcularTotales($pedido->nota_reservacion_id);
+                return back()->with('success', 'Comanda enviada a cocina con éxito.');
+            }
+        }
+
+        // 2. Procesamiento de un solo platillo (Formulario tradicional)
         $request->validate([
             'platillo_id' => 'required|exists:platillo,id',
             'cantidad' => 'required|integer|min:1|max:20',
@@ -133,16 +180,13 @@ class ComandaController extends Controller
             'notas' => 'nullable|string|max:250',
         ]);
 
-        $pedido = Pedido::findOrFail($pedidoId);
         $platillo = Platillo::findOrFail($request->platillo_id);
 
-        // Formatear nota con tiempo de servicio (ej: "[1er Tiempo] Sin cebolla")
         $tiempo = $request->input('tiempo_servicio', '1er Tiempo');
         $notasTexto = trim($request->input('notas', ''));
         $notaFinal = '[' . $tiempo . ']' . ($notasTexto !== '' ? ' ' . $notasTexto : '');
         $esCortesia = $request->has('es_cortesia');
 
-        // Buscar si ya existe el mismo platillo con el mismo tiempo, notas y estado de cortesía
         $detalleExistente = PedidoDetalle::where('pedido_id', $pedido->id)
             ->where('platillo_id', $platillo->id)
             ->where('es_cortesia', $esCortesia)
@@ -150,11 +194,9 @@ class ComandaController extends Controller
             ->first();
 
         if ($detalleExistente) {
-            // Si ya existe exactamente igual, acumular la cantidad
             $detalleExistente->cantidad += $request->cantidad;
             $detalleExistente->save();
         } else {
-            // Si no existe o difiere en instrucciones/cortesía, crear nuevo renglón
             PedidoDetalle::create([
                 'pedido_id' => $pedido->id,
                 'platillo_id' => $platillo->id,
@@ -175,7 +217,6 @@ class ComandaController extends Controller
     {
         $detalle = PedidoDetalle::with('pedido.nota')->findOrFail($detalleId);
 
-        // Validar si la comanda o el pedido ya están cerrados
         if ($detalle->pedido->estatus === 'cerrado' || $detalle->pedido->nota->esta_cerrada) {
             return back()->with('error', 'Seguridad: No se pueden realizar ajustes a platillos de una comanda liquidada.');
         }
@@ -229,25 +270,22 @@ class ComandaController extends Controller
         return DB::transaction(function () use ($request, $notaId) {
             $nota = NotaReservacion::with('pedidos.detalles', 'reservacion.cliente')->findOrFail($notaId);
 
-            // Calcular subtotal únicamente de platillos activos y que no sean cortesía
             $subtotal = 0;
             foreach ($nota->pedidos as $ped) {
                 foreach ($ped->detalles as $det) {
-                    if ($det->estatus === 'activo' && !$det->es_cortesia) {
-                        $cantEfectiva = max(0, $det->cantidad - $det->cantidad_cancelada);
-                        $subtotal += ($cantEfectiva * $det->precio_unitario);
+                    if (!$det->es_cortesia) {
+                        $cantEfectiva = max(0, (int)$det->cantidad - (int)$det->cantidad_cancelada);
+                        $subtotal += ($cantEfectiva * (float)$det->precio_unitario);
                     }
                 }
             }
 
-            // Obtener el descuento procesado
             $descuento = (float) ($request->descuento ?? 0);
             $base = max(0, $subtotal - $descuento);
             $impuestos = round($base * 0.16, 2);
             $propina = (float) ($request->propina ?? 0);
             $total = $base + $impuestos + $propina;
 
-            // Guardar valores recalculados
             $nota->update([
                 'subtotal' => $subtotal,
                 'descuento' => $descuento,
@@ -258,7 +296,6 @@ class ComandaController extends Controller
                 'comentarios' => $request->comentarios,
             ]);
 
-            // Cerrar los pedidos de la comanda
             foreach ($nota->pedidos as $ped) {
                 $ped->estatus = 'cerrado';
                 $ped->save();
@@ -269,7 +306,6 @@ class ComandaController extends Controller
                 $nota->reservacion->save();
             }
 
-            // Lógica de puntos VIP...
             $puntosGanados = 0;
             $saldoTotal = 0;
             $clienteNombre = null;
@@ -345,7 +381,10 @@ class ComandaController extends Controller
         $subtotal = 0;
         foreach ($nota->pedidos as $ped) {
             foreach ($ped->detalles as $det) {
-                $subtotal += $det->subtotal;
+                if (!$det->es_cortesia) {
+                    $cantEfectiva = max(0, (int)$det->cantidad - (int)$det->cantidad_cancelada);
+                    $subtotal += ($cantEfectiva * (float)$det->precio_unitario);
+                }
             }
         }
 
