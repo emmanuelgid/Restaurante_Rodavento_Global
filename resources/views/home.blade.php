@@ -7,10 +7,36 @@
         <!-- Header Title -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
             <div>
-                <h1 class="h3 fw-bold text-dark mb-1">Panel de Control & Operaciones</h1>
-                <p class="text-muted mb-0 small">Bienvenido, <strong>{{ Auth::user()->name }}</strong>. Monitoreo en tiempo real de sucursales, sala, comandas y fidelización VIP.</p>
+                <h1 class="h3 fw-bold text-dark mb-1">
+                    Panel de Control & Operaciones
+                    @if($sucursalActual ?? false)
+                        <span class="badge bg-warning-subtle text-dark border border-warning fs-6 align-middle ms-2">
+                            <i class="bi bi-building me-1"></i>{{ $sucursalActual->nombre }}
+                        </span>
+                    @endif
+                </h1>
+                <p class="text-muted mb-0 small">
+                    Bienvenido, <strong>{{ Auth::user()->name }}</strong>. Monitoreo en tiempo real de sucursales, sala, comandas y fidelización VIP.
+                </p>
             </div>
-            <div class="d-flex gap-2 mt-3 mt-md-0">
+
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-3 mt-md-0">
+                @can('sucursales.admin')
+                    <form method="GET" action="{{ route('home') }}" class="d-flex align-items-center gap-2">
+                        <label for="sucursal_id" class="small text-muted fw-semibold mb-0">
+                            <i class="bi bi-building"></i> Sucursal:
+                        </label>
+                        <select name="sucursal_id" id="sucursal_id" class="form-select form-select-sm w-auto shadow-sm" onchange="this.form.submit()">
+                            <option value="">Todas las sucursales</option>
+                            @foreach($sucursales ?? [] as $suc)
+                                <option value="{{ $suc->id }}" {{ (string) ($sucursalId ?? '') === (string) $suc->id ? 'selected' : '' }}>
+                                    {{ $suc->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+                @endcan
+
                 @can('reservaciones.gestionar')
                     <a href="{{ route('reservaciones.create') }}" class="btn btn-rv-gold btn-sm d-flex align-items-center gap-1 shadow-sm">
                         <i class="bi bi-calendar-plus"></i> Nueva Reservación

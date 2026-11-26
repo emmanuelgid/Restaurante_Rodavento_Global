@@ -18,6 +18,37 @@ class HomeController extends Controller
 
     public function index(Request $request)
     {
+        $puedeElegirSucursal = auth()->user()?->can('sucursales.admin') ?? false;
+
+        if ($puedeElegirSucursal) {
+            $sucursales = Sucursal::where('activa', true)->orderBy('nombre')->get();
+
+            // Si viene el parámetro en el formulario (?sucursal_id=...)
+            if ($request->has('sucursal_id')) {
+                $idSolicitado = $request->query('sucursal_id');
+
+                if ($idSolicitado !== null && $idSolicitado !== '' && $sucursales->contains('id', (int) $idSolicitado)) {
+                    session(['admin_sucursal_id' => (int) $idSolicitado]);
+                } else {
+                    session()->forget('admin_sucursal_id');
+                }
+            }
+
+            $sucursalId = session('admin_sucursal_id');
+            $sucursalActual = $sucursalId ? $sucursales->firstWhere('id', (int) $sucursalId) : null;
+
+            // Si la sucursal guardada ya no existe o se desactivó, limpiar sesión
+            if ($sucursalId && !$sucursalActual) {
+                session()->forget('admin_sucursal_id');
+                $sucursalId = null;
+            }
+        } else {
+            session()->forget('admin_sucursal_id');
+            $sucursales = collect();
+            $sucursalId = null;
+            $sucursalActual = null;
+        }
+
         $sucursales = Sucursal::where('activa', true)->orderBy('nombre')->get();
         $sucursalId = $request->query('sucursal_id');
         $sucursalActual = $sucursalId ? Sucursal::find($sucursalId) : null;
@@ -29,7 +60,7 @@ class HomeController extends Controller
         $comandasAbiertasQuery = Pedido::whereIn('estatus', ['abierto', 'en_proceso']);
         $ventasTotalesQuery = NotaReservacion::query();
         $totalMesasQuery = Mesa::where('activa', true);
-        
+
         // 2. Próximas Reservaciones (SOLO PENDIENTES / ACTIVAS, NUNCA FINALIZADAS NI CANCELADAS)
         $ultimasReservacionesQuery = Reservacion::with([
             'cliente',
