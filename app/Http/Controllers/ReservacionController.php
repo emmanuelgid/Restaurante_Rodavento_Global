@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\SucursalActiva;
 use Illuminate\Http\Request;
 use App\Models\{Reservacion, Cliente, Sucursal, Mesa, MesaSucursal, ReservacionMesa, NotaReservacion, Bitacora};
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,24 @@ class ReservacionController extends Controller
 
     public function index(Request $request)
     {
-        $query = Reservacion::with(['cliente.nivelLealtad', 'mesasAsignadas.mesaSucursal.mesa', 'mesasAsignadas.mesaSucursal.sucursal', 'nota']);
+        $sucursalId = SucursalActiva::id();
+
+        $query = Reservacion::with([
+            'cliente.nivelLealtad',
+            'mesasAsignadas.mesaSucursal.mesa',
+            'mesasAsignadas.mesaSucursal.sucursal',
+            'nota'
+        ]);
+
+        if ($sucursalId) {
+            $query->where(function ($q) use ($sucursalId) {
+                $q->whereHas('mesasAsignadas.mesaSucursal', function ($sub) use ($sucursalId) {
+                    $sub->where('sucursal_id', $sucursalId);
+                })->orWhereHas('nota', function ($sub) use ($sucursalId) {
+                    $sub->where('sucursal_id', $sucursalId);
+                });
+            });
+        }
 
         if ($request->filled('estatus')) {
             $query->where('estatus', $request->estatus);
@@ -30,21 +48,28 @@ class ReservacionController extends Controller
 
         $reservaciones = $query->orderBy('fecha_hora_inicio', 'desc')->paginate(10);
         $clientes = Cliente::where('activo', true)->orderBy('nombres')->get();
-        $sucursales = Sucursal::where('activa', true)->get();
+        $sucursales = Sucursal::where('activa', true)
+            ->when($sucursalId, fn ($q) => $q->where('id', $sucursalId))
+            ->get();
 
-        return view('reservaciones.index', compact('reservaciones', 'clientes', 'sucursales'));
+        return view('reservaciones.index', compact('reservaciones', 'clientes', 'sucursales', 'sucursalId'));
     }
 
     public function create()
     {
+        $sucursalId = SucursalActiva::id();
         $clientes = Cliente::where('activo', true)->orderBy('nombres')->get();
-        $sucursales = Sucursal::where('activa', true)->with('mesas.mesa')->get();
+        $sucursales = Sucursal::where('activa', true)
+            ->when($sucursalId, fn ($q) => $q->where('id', $sucursalId))
+            ->with('mesas.mesa')
+            ->get();
+
         $hoy = Carbon::today();
         $hayEventoActivo = Temporada::where('fecha_inicio', '<=', $hoy)
-                                    ->where('fecha_final', '>=', $hoy)
-                                    ->exists();
+            ->where('fecha_final', '>=', $hoy)
+            ->exists();
 
-        return view('reservaciones.create', compact('clientes', 'sucursales', 'hayEventoActivo'));
+        return view('reservaciones.create', compact('clientes', 'sucursales', 'hayEventoActivo', 'sucursalId'));
     }
 
     public function store(Request $request)

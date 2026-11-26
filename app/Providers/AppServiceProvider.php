@@ -9,6 +9,9 @@ use Illuminate\Database\Connectors\PostgresConnector;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 
+use App\Support\SucursalActiva;
+use Illuminate\Support\Facades\View;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +28,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+
+        View::composer('*', function ($view) {
+            if (auth()->check() && auth()->user()->can('sucursales.admin')) {
+                $view->with([
+                    'sucursalActivaId' => SucursalActiva::id(),
+                    'sucursalActivaNombre' => SucursalActiva::nombre(),
+                ]);
+            }
+        });
+
         // Solución definitiva para inyectar el Endpoint de Neon en Windows
         DB::resolverFor('pgsql', function ($connection, $database, $prefix, $config) {
             $connector = new class extends PostgresConnector {
