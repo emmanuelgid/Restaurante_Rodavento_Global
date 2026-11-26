@@ -6,13 +6,23 @@
     <div class="container-fluid px-lg-4">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
             <div>
-                <h1 class="h3 fw-bold text-dark mb-1">Equipo & Colaboradores</h1>
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h1 class="h3 fw-bold text-dark mb-0">Equipo & Colaboradores</h1>
+                    @can('sucursales.admin')
+                        <span class="badge rounded-pill {{ ($sucursalActivaId ?? null) ? 'bg-warning text-dark' : 'bg-dark text-warning' }} px-3 py-2">
+                            <i class="bi bi-building me-1"></i>
+                            Sucursal: {{ $sucursalActivaNombre ?? 'Todas las sucursales' }}
+                        </span>
+                    @endcan
+                </div>
                 <p class="text-muted mb-0 small">Directorio de personal de cocina, sala, capitanes, chefs y gerencia.</p>
             </div>
             <div class="mt-3 mt-md-0">
-                <button type="button" class="btn btn-rv-gold btn-sm" data-bs-toggle="modal" data-bs-target="#empleadoModal">
-                    <i class="bi bi-person-plus"></i> Registrar Colaborador
-                </button>
+                @can('empleados.admin')
+                    <button type="button" class="btn btn-rv-gold btn-sm" data-bs-toggle="modal" data-bs-target="#empleadoModal">
+                        <i class="bi bi-person-plus"></i> Registrar Colaborador
+                    </button>
+                @endcan
             </div>
         </div>
 
@@ -34,49 +44,53 @@
         </div>
 
         <!-- Modal Agregar Empleado -->
-        <div class="modal fade" id="empleadoModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form method="POST" action="{{ route('empleados.store') }}">
-                        @csrf
-                        <div class="modal-header">
-                            <h5 class="modal-title fw-bold">Registrar Colaborador</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Nombres *</label>
-                                <input type="text" name="nombres" class="form-control" required>
+        @can('empleados.admin')
+            <div class="modal fade" id="empleadoModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="POST" action="{{ route('empleados.store') }}">
+                            @csrf
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold">Registrar Colaborador</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Apellidos *</label>
-                                <input type="text" name="apellidos" class="form-control" required>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Nombres *</label>
+                                    <input type="text" name="nombres" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Apellidos *</label>
+                                    <input type="text" name="apellidos" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Puesto / Cargo *</label>
+                                    <input type="text" name="puesto" class="form-control" required placeholder="Ej. Mesero, Chef de Partie, Sommelier, Capitán">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Teléfono</label>
+                                    <input type="text" name="telefono" class="form-control" placeholder="7221234567">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Sucursal Asignada *</label>
+                                    <select name="sucursal_id" class="form-select" required>
+                                        @foreach($sucursales as $s)
+                                            <option value="{{ $s->id }}" {{ (($sucursalActivaId ?? null) == $s->id) ? 'selected' : '' }}>
+                                                {{ $s->nombre }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Puesto / Cargo *</label>
-                                <input type="text" name="puesto" class="form-control" required placeholder="Ej. Mesero, Chef de Partie, Sommelier, Capitán">
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Registrar</button>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Teléfono</label>
-                                <input type="text" name="telefono" class="form-control" placeholder="7221234567">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Sucursal Asignada *</label>
-                                <select name="sucursal_id" class="form-select" required>
-                                    @foreach($sucursales as $s)
-                                        <option value="{{ $s->id }}">{{ $s->nombre }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Registrar</button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
+        @endcan
 
         <!-- Tabla de Empleados -->
         <div class="card card-custom">

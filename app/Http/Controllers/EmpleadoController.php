@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\{Empleado, Sucursal, EmpleadoSucursal, Bitacora};
+use App\Support\SucursalActiva;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -17,8 +18,14 @@ class EmpleadoController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $sucursalActiva = SucursalActiva::id();
 
-        $query = Empleado::with(['sucursales', 'user.rol']);
+        $query = Empleado::with(['sucursales', 'user.rol'])
+            ->when($sucursalActiva, function ($q) use ($sucursalActiva) {
+                $q->whereHas('sucursales', function ($sq) use ($sucursalActiva) {
+                    $sq->where('sucursal.id', $sucursalActiva);
+                });
+            });
 
         // Filtro de búsqueda por nombre, teléfono o correo del usuario
         if ($search) {
@@ -34,7 +41,10 @@ class EmpleadoController extends Controller
         }
 
         $empleados = $query->orderBy('nombres')->get();
-        $sucursales = Sucursal::where('activa', true)->get();
+
+        $sucursales = Sucursal::where('activa', true)
+            ->when($sucursalActiva, fn($q) => $q->where('id', $sucursalActiva))
+            ->get();
 
         return view('empleados.index', compact('empleados', 'sucursales', 'search'));
     }
@@ -49,6 +59,9 @@ class EmpleadoController extends Controller
             'sucursal_id' => 'required|exists:cadena.sucursal,id',
         ]);
 
+        $sucursalActiva = SucursalActiva::id();
+        $sucursalId = $sucursalActiva ?: $request->sucursal_id;
+
         $empleado = Empleado::create([
             'nombres' => $request->nombres,
             'apellidos' => $request->apellidos,
@@ -60,7 +73,7 @@ class EmpleadoController extends Controller
 
         EmpleadoSucursal::create([
             'empleado_id' => $empleado->id,
-            'sucursal_id' => $request->sucursal_id,
+            'sucursal_id' => $sucursalId,
         ]);
 
         Bitacora::create([
