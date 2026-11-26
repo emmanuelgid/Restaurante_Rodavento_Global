@@ -68,13 +68,27 @@ class ComandaController extends Controller
             ->when($sucursalActiva, fn($q) => $q->where('id', $sucursalActiva))
             ->get();
 
+        $reservacionesConNota = NotaReservacion::whereNotNull('reservacion_id')
+            ->pluck('reservacion_id');
+
         $reservaciones = Reservacion::whereIn('estatus', ['confirmada', 'en_mesa'])
-            ->when($sucursalActiva, fn($q) => $q->where('sucursal_id', $sucursalActiva))
-            ->with('cliente')
+            ->whereNotIn('id', $reservacionesConNota)
+            ->when($sucursalActiva, function ($q) use ($sucursalActiva) {
+                $q->whereHas('mesasAsignadas.mesaSucursal', function ($sub) use ($sucursalActiva) {
+                    $sub->where('sucursal_id', $sucursalActiva);
+                });
+            })
+            ->with([
+                'cliente',
+                'mesasAsignadas.mesaSucursal.mesa',
+                'mesasAsignadas.mesaSucursal.sucursal',
+            ])
+            ->orderBy('fecha_hora_inicio', 'asc')
             ->get();
 
         $empleados = Empleado::where('estatus', 'activo')
             ->when($sucursalActiva, fn($q) => $q->where('sucursal_id', $sucursalActiva))
+            ->orderBy('nombres')
             ->get();
 
         return view('comandas.create', compact('sucursales', 'reservaciones', 'empleados'));
