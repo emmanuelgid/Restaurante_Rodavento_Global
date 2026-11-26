@@ -8,6 +8,7 @@ use App\Models\{
     Cliente, NivelLealtad, Sucursal, Alergia, SeveridadAlergia,
     Preferencia, MovimientoPuntos, Bitacora, Consentimiento, SolicitudArco
 };
+use App\Support\SucursalActiva;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -21,7 +22,12 @@ class ClienteController extends Controller
 
     public function index(Request $request)
     {
-        $query = Cliente::with(['nivelLealtad', 'sucursalAlta', 'alergias']);
+        $sucursalActiva = SucursalActiva::id();
+
+        $query = Cliente::with(['nivelLealtad', 'sucursalAlta', 'alergias'])
+            ->when($sucursalActiva, function ($q) use ($sucursalActiva) {
+                $q->where('sucursal_alta_id', $sucursalActiva);
+            });
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -45,8 +51,12 @@ class ClienteController extends Controller
 
     public function create()
     {
+        $sucursalActiva = SucursalActiva::id();
+
         $niveles = NivelLealtad::all();
-        $sucursales = Sucursal::where('activa', true)->get();
+        $sucursales = Sucursal::where('activa', true)
+            ->when($sucursalActiva, fn($q) => $q->where('id', $sucursalActiva))
+            ->get();
         $alergias = Alergia::all();
         $severidades = SeveridadAlergia::all();
         $preferencias = Preferencia::all();
@@ -68,14 +78,17 @@ class ClienteController extends Controller
             'nueva_alergia_descripcion' => 'nullable|string',
         ]);
 
-        return DB::transaction(function () use ($request) {
+        $sucursalActiva = SucursalActiva::id();
+        $sucursalAltaId = $sucursalActiva ?: $request->sucursal_alta_id;
+
+        return DB::transaction(function () use ($request, $sucursalAltaId) {
             $cliente = Cliente::create([
                 'nombres' => $request->nombres,
                 'apellidos' => $request->apellidos,
                 'correo' => $request->correo,
                 'telefono' => $request->telefono,
                 'fecha_nacimiento' => $request->fecha_nacimiento,
-                'sucursal_alta_id' => $request->sucursal_alta_id,
+                'sucursal_alta_id' => $sucursalAltaId,
                 'nivel_lealtad_id' => $request->nivel_lealtad_id,
                 'fecha_alta' => Carbon::now(),
                 'puntos_saldo' => 0,
