@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\{NivelLealtad, Beneficio, ReglaPuntos, Cliente, MovimientoPuntos};
+use App\Support\SucursalActiva;
 
 class LealtadController extends Controller
 {
@@ -14,10 +15,22 @@ class LealtadController extends Controller
 
     public function index()
     {
+        $sucursalActiva = SucursalActiva::id();
+
         $niveles = NivelLealtad::with(['beneficios', 'clientes'])->orderBy('puntos_minimos')->get();
         $beneficios = Beneficio::with('nivelesLealtad')->get();
         $reglas = ReglaPuntos::orderByDesc('vigencia_inicio')->get();
-        $ultimosMovimientos = MovimientoPuntos::with(['cliente', 'notaReservacion'])->latest('fecha')->take(10)->get();
+
+        $ultimosMovimientos = MovimientoPuntos::with(['cliente', 'notaReservacion'])
+            ->when($sucursalActiva, function ($q) use ($sucursalActiva) {
+                $q->where(function ($sub) use ($sucursalActiva) {
+                    $sub->whereHas('notaReservacion', fn($nr) => $nr->where('sucursal_id', $sucursalActiva))
+                        ->orWhereHas('cliente', fn($c) => $c->where('sucursal_alta_id', $sucursalActiva));
+                });
+            })
+            ->latest('fecha')
+            ->take(10)
+            ->get();
 
         return view('lealtad.index', compact('niveles', 'beneficios', 'reglas', 'ultimosMovimientos'));
     }
