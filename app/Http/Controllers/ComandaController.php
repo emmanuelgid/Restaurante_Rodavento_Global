@@ -8,6 +8,7 @@ use App\Models\{
     Platillo, Reservacion, Sucursal, Empleado, MovimientoPuntos,
     ReglaPuntos, Bitacora
 };
+use App\Support\SucursalActiva;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -21,6 +22,8 @@ class ComandaController extends Controller
 
     public function index(Request $request)
     {
+        $sucursalActiva = SucursalActiva::id();
+
         $query = NotaReservacion::with([
             'sucursal',
             'reservacion.cliente',
@@ -29,7 +32,9 @@ class ComandaController extends Controller
             'pedidos.detalles.platillo'
         ]);
 
-        if ($request->filled('sucursal_id')) {
+        if ($sucursalActiva) {
+            $query->where('sucursal_id', $sucursalActiva);
+        } elseif ($request->filled('sucursal_id')) {
             $query->where('sucursal_id', $request->sucursal_id);
         }
 
@@ -43,7 +48,9 @@ class ComandaController extends Controller
             return $nota->esta_cerrada;
         })->values();
 
-        $sucursales = Sucursal::where('activa', true)->get();
+        $sucursales = Sucursal::where('activa', true)
+            ->when($sucursalActiva, fn($q) => $q->where('id', $sucursalActiva))
+            ->get();
 
         return view('comandas.index', compact(
             'comandasPendientes',
@@ -55,11 +62,20 @@ class ComandaController extends Controller
 
     public function create()
     {
-        $sucursales = Sucursal::where('activa', true)->get();
+        $sucursalActiva = SucursalActiva::id();
+
+        $sucursales = Sucursal::where('activa', true)
+            ->when($sucursalActiva, fn($q) => $q->where('id', $sucursalActiva))
+            ->get();
+
         $reservaciones = Reservacion::whereIn('estatus', ['confirmada', 'en_mesa'])
+            ->when($sucursalActiva, fn($q) => $q->where('sucursal_id', $sucursalActiva))
             ->with('cliente')
             ->get();
-        $empleados = Empleado::where('estatus', 'activo')->get();
+
+        $empleados = Empleado::where('estatus', 'activo')
+            ->when($sucursalActiva, fn($q) => $q->where('sucursal_id', $sucursalActiva))
+            ->get();
 
         return view('comandas.create', compact('sucursales', 'reservaciones', 'empleados'));
     }
@@ -72,9 +88,12 @@ class ComandaController extends Controller
             'empleado_id' => 'required|exists:empleado,id',
         ]);
 
-        return DB::transaction(function () use ($request) {
+        $sucursalActiva = SucursalActiva::id();
+        $sucursalId = $sucursalActiva ?: $request->sucursal_id;
+
+        return DB::transaction(function () use ($request, $sucursalId) {
             $nota = NotaReservacion::create([
-                'sucursal_id' => $request->sucursal_id,
+                'sucursal_id' => $sucursalId,
                 'reservacion_id' => $request->filled('reservacion_id') ? $request->reservacion_id : null,
                 'empleado_id' => $request->empleado_id,
                 'subtotal' => 0,
