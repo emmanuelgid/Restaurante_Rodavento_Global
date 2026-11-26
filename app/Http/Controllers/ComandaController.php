@@ -147,7 +147,8 @@ class ComandaController extends Controller
             'pedidos.detalles.ajustes'
         ])->findOrFail($id);
 
-        $platillosDisponibles = Platillo::where('disponible', true)
+        $platillosDisponibles = Platillo::with('categoria')
+            ->where('disponible', true)
             ->where('estatus', 'activo')
             ->orderBy('categoria_id')
             ->orderBy('nombre')
@@ -166,16 +167,20 @@ class ComandaController extends Controller
 
             if (is_array($items) && count($items) > 0) {
                 foreach ($items as $item) {
-                    if (empty($item['platillo_id'])) continue;
+                    if (empty($item['platillo_id'])) {
+                        continue;
+                    }
 
                     $platillo = Platillo::find($item['platillo_id']);
-                    if (!$platillo) continue;
+                    if (!$platillo) {
+                        continue;
+                    }
 
                     $tiempo = $item['tiempo_servicio'] ?? '1er Tiempo';
                     $instrucciones = trim($item['notas'] ?? '');
                     $notaFinal = '[' . $tiempo . ']' . ($instrucciones !== '' ? ' ' . $instrucciones : '');
                     $esCortesia = !empty($item['es_cortesia']);
-                    $cantidad = (int) ($item['cantidad'] ?? 1);
+                    $cantidad = max(1, (int) ($item['cantidad'] ?? 1));
 
                     $detalleExistente = PedidoDetalle::where('pedido_id', $pedido->id)
                         ->where('platillo_id', $platillo->id)
@@ -218,7 +223,7 @@ class ComandaController extends Controller
         $tiempo = $request->input('tiempo_servicio', '1er Tiempo');
         $notasTexto = trim($request->input('notas', ''));
         $notaFinal = '[' . $tiempo . ']' . ($notasTexto !== '' ? ' ' . $notasTexto : '');
-        $esCortesia = $request->has('es_cortesia');
+        $esCortesia = $request->boolean('es_cortesia');
 
         $detalleExistente = PedidoDetalle::where('pedido_id', $pedido->id)
             ->where('platillo_id', $platillo->id)
@@ -227,13 +232,13 @@ class ComandaController extends Controller
             ->first();
 
         if ($detalleExistente) {
-            $detalleExistente->cantidad += $request->cantidad;
+            $detalleExistente->cantidad += (int) $request->cantidad;
             $detalleExistente->save();
         } else {
             PedidoDetalle::create([
                 'pedido_id' => $pedido->id,
                 'platillo_id' => $platillo->id,
-                'cantidad' => $request->cantidad,
+                'cantidad' => (int) $request->cantidad,
                 'cantidad_cancelada' => 0,
                 'precio_unitario' => $platillo->precio,
                 'es_cortesia' => $esCortesia,
@@ -307,8 +312,8 @@ class ComandaController extends Controller
             foreach ($nota->pedidos as $ped) {
                 foreach ($ped->detalles as $det) {
                     if (!$det->es_cortesia) {
-                        $cantEfectiva = max(0, (int)$det->cantidad - (int)$det->cantidad_cancelada);
-                        $subtotal += ($cantEfectiva * (float)$det->precio_unitario);
+                        $cantEfectiva = max(0, (int) $det->cantidad - (int) $det->cantidad_cancelada);
+                        $subtotal += ($cantEfectiva * (float) $det->precio_unitario);
                     }
                 }
             }
@@ -409,14 +414,16 @@ class ComandaController extends Controller
     private function recalcularTotales($notaId)
     {
         $nota = NotaReservacion::with('pedidos.detalles')->find($notaId);
-        if (!$nota) return;
+        if (!$nota) {
+            return;
+        }
 
         $subtotal = 0;
         foreach ($nota->pedidos as $ped) {
             foreach ($ped->detalles as $det) {
                 if (!$det->es_cortesia) {
-                    $cantEfectiva = max(0, (int)$det->cantidad - (int)$det->cantidad_cancelada);
-                    $subtotal += ($cantEfectiva * (float)$det->precio_unitario);
+                    $cantEfectiva = max(0, (int) $det->cantidad - (int) $det->cantidad_cancelada);
+                    $subtotal += ($cantEfectiva * (float) $det->precio_unitario);
                 }
             }
         }
